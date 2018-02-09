@@ -1,0 +1,21 @@
+{
+  "loadTestData": true,
+  "watch": {
+    "range": []
+  },
+  "fetch": {
+    "port": 8081,
+    "resource": "mockState.txt",
+    "sequenceKey": "LastChangeSequence"
+  },
+  "summary": [
+    ["assetNumber", "EnhancedDownload_AssetId"],
+    ["apps", "PlatformInformation_ApplicationVersion"],
+    ["content", "PlatformInformation_ContentVersion"],
+    ["os", "PlatformInformation_OSVersion"],
+    ["nxp", "DmData_NXPVersion"],
+    ["genesis", "DmData_GenesisVersion"],
+    ["gmu", "SiteSettings_EgmProtocol"],
+    ["ebs", "EliteBonusing_communications_Status_commsState"]
+  ]
+}
