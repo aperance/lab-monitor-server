@@ -1,10 +1,4 @@
-exports.createEngine = (
-  watchList,
-  deviceStore,
-  config,
-  fetch,
-  createPoll = createPoll
-) => {
+exports.createEngine = (watchList, deviceStore, config, fetch) => {
   const poll = createPoll(watchList, deviceStore, config, fetch);
   const checkWatchList = createCheckWatchList(watchList, poll);
   setInterval(checkWatchList, 300000);

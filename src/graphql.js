@@ -5,7 +5,7 @@ const {
   GraphQLFloat
 } = require("graphql");
 
-exports.createSchema = store => {
+exports.createSchema = deviceStore => {
   const DeviceType = new GraphQLObjectType({
     name: "Device",
     fields: {
@@ -29,7 +29,7 @@ exports.createSchema = store => {
           args: {
             id: { type: GraphQLString }
           },
-          resolve: (root, args) => store.devices.get(args.id)
+          resolve: (root, args) => deviceStore.get(args.id)
         }
       }
     })

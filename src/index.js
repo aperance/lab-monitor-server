@@ -21,7 +21,7 @@ app.use("/graphql", graphqlHTTP({ schema, rootValue: global, graphiql: true }));
 
 app.get("/", (req, res) => res.send("GET request to the homepage"));
 
-server.listen(8080, () => console.log("Example app listening on port 3000"));
+server.listen(8080, () => console.log("Example app listening on port 8080"));
 
 /* Load Demo Store Data */
 const testData = require("../testData.json");

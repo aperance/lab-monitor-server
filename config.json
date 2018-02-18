@@ -8,6 +8,9 @@
     "resource": "mockState.txt",
     "sequenceKey": "LastChangeSequence"
   },
+  "history": {
+    "maxSize": 5
+  },
   "summary": [
     ["assetNumber", "EnhancedDownload_AssetId"],
     ["apps", "PlatformInformation_ApplicationVersion"],
