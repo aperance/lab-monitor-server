@@ -25,5 +25,6 @@ server.listen(8080, () => console.log("Example app listening on port 8080"));
 
 /* Load Demo Store Data */
 const testData = require("../testData.json");
-if (config.loadTestData) deviceStore._state = new Map(Object.entries(testData));
-console.log(deviceStore._state);
+if (config.loadTestData)
+  deviceStore._deviceData = new Map(Object.entries(testData));
+console.log(deviceStore._deviceData);

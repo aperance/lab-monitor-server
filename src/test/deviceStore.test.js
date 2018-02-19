@@ -8,13 +8,16 @@ describe("deviceStore", function() {
   describe("set and get full object", function() {
     //devices.emitter.on('update', (obj) => console.log('Fired!!!!!!!!!!'));
     deviceStore.set(id, { rawProp1: "rawValue1", rawProp2: "rawValue2" });
-    deviceStore.set(id, { rawProp1: "rawValue11", rawProp2: "rawValue22" });
+    deviceStore.set(id, { rawProp1: "rawValue11", rawProp2: "rawValue2" });
     const expected = {
-      timestamp: Date.now(),
-      state: { rawProp1: "rawValue11", rawProp2: "rawValue22" },
+      state: {
+        timestamp: Date.now(),
+        rawProp1: "rawValue11",
+        rawProp2: "rawValue2"
+      },
       history: {
         rawProp1: [[Date.now(), "rawValue11"], [Date.now(), "rawValue1"]],
-        rawProp2: [[Date.now(), "rawValue22"], [Date.now(), "rawValue2"]]
+        rawProp2: [[Date.now(), "rawValue2"]]
       }
     };
     it("set and get object are equivilant", () => {
