@@ -5,6 +5,7 @@ class DeviceStore {
     this._deviceData = new Map();
     this.emitter = new events.EventEmitter();
     this._maxSize = config.history.maxSize;
+    this._dateFormat = config.dateFormat;
   }
 
   get(id) {
@@ -43,9 +44,22 @@ class DeviceStore {
       while (acc[key].length > this._maxSize) acc[key].pop(); // Limit array length to maxSize setting
       return acc;
     }, {});
+    const options = {
+      weekday: "long",
+      year: "2-digit",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric"
+    };
+
+    const timestamp = new Date()
+      .toLocaleString("en-US", this._dateFormat)
+      .replace(/,/g, "");
 
     this._deviceData.set(id, {
-      state: { ...newState, timestamp: Date.now() },
+      state: { ...newState, timestamp },
       history: { ...history, ...modifiedHistory }
     });
 
