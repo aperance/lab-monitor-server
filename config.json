@@ -18,20 +18,20 @@
   "history": {
     "maxSize": 5
   },
+  "dateFormat": {
+    "weekday": "long",
+    "year": "2-digit",
+    "month": "numeric",
+    "day": "numeric",
+    "hour": "numeric",
+    "minute": "numeric",
+    "second": "numeric"
+  },
   "client": {
     "columns": [
-      { "property": "Property_AA", "title": "AA" },
-      { "property": "Property_B", "title": "B" }
+      { "property": "Egm_AssetNumber", "title": "Asset Number" },
+      { "property": "PlatformInformation_IPAddress", "title": "IP Address" },
+      { "property": "timestamp", "title": "Last Heard" }
     ]
-  },
-  "summary": [
-    ["assetNumber", "EnhancedDownload_AssetId"],
-    ["apps", "PlatformInformation_ApplicationVersion"],
-    ["content", "PlatformInformation_ContentVersion"],
-    ["os", "PlatformInformation_OSVersion"],
-    ["nxp", "DmData_NXPVersion"],
-    ["genesis", "DmData_GenesisVersion"],
-    ["gmu", "SiteSettings_EgmProtocol"],
-    ["ebs", "EliteBonusing_communications_Status_commsState"]
-  ]
+  }
 }
