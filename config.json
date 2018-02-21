@@ -18,6 +18,12 @@
   "history": {
     "maxSize": 5
   },
+  "client": {
+    "columns": [
+      { "property": "Property_A", "title": "AA" },
+      { "property": "Property_B", "title": "B" }
+    ]
+  },
   "summary": [
     ["assetNumber", "EnhancedDownload_AssetId"],
     ["apps", "PlatformInformation_ApplicationVersion"],

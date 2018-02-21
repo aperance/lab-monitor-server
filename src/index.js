@@ -16,7 +16,11 @@ const engine = require("./engine.js").createEngine(
 );
 
 const schema = require("./graphql.js").createSchema(watchList, deviceStore);
-const websocket = require("./websocket.js").createWebsocket(io, deviceStore);
+const websocket = require("./websocket.js").createWebsocket(
+  io,
+  deviceStore,
+  config
+);
 
 app.use("/graphql", graphqlHTTP({ schema, rootValue: global, graphiql: true }));
 
