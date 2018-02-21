@@ -20,7 +20,7 @@
   },
   "client": {
     "columns": [
-      { "property": "Property_A", "title": "AA" },
+      { "property": "Property_AA", "title": "AA" },
       { "property": "Property_B", "title": "B" }
     ]
   },
