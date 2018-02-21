@@ -14,6 +14,7 @@ const engine = require("./engine.js").createEngine(
   config,
   fetch
 );
+
 const schema = require("./graphql.js").createSchema(watchList, deviceStore);
 const websocket = require("./websocket.js").createWebsocket(io, deviceStore);
 
@@ -27,4 +28,3 @@ server.listen(8080, () => console.log("Example app listening on port 8080"));
 const testData = require("../testData.json");
 if (config.loadTestData)
   deviceStore._deviceData = new Map(Object.entries(testData));
-console.log(deviceStore._deviceData);

@@ -1,12 +1,19 @@
 {
-  "loadTestData": true,
-  "watch": {
-    "range": [{ "subnet": "10.80.132", "start": "5", "end": "5" }]
+  "loadTestData": false,
+  "watchList": {
+    "range": [{ "subnet": "10.80.132.0", "start": "5", "end": "5" }],
+    "checkInterval": 5000,
+    "staleDataTimeout": 30000
   },
-  "fetch": {
-    "port": 8081,
-    "resource": "mockState.txt",
-    "sequenceKey": "LastChangeSequence"
+  "polling": {
+    "fetch": {
+      "port": 8001,
+      "resource": "/iView/state.js",
+      "sequenceKey": "LastChangeSequence",
+      "timeout": 5000
+    },
+    "retryInterval": 1000,
+    "maxRetries": 5
   },
   "history": {
     "maxSize": 5
