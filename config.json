@@ -3,14 +3,14 @@
   "watchList": {
     "range": [{ "subnet": "10.80.132.0", "start": "5", "end": "5" }],
     "checkInterval": 5000,
-    "staleDataTimeout": 30000
+    "staleDataTimeout": 300000
   },
   "polling": {
     "fetch": {
       "port": 8001,
       "resource": "/iView/state.js",
       "sequenceKey": "LastChangeSequence",
-      "timeout": 5000
+      "timeout": 30000
     },
     "retryInterval": 1000,
     "maxRetries": 5
@@ -31,7 +31,12 @@
     "columns": [
       { "property": "Egm_AssetNumber", "title": "Asset Number" },
       { "property": "PlatformInformation_IPAddress", "title": "IP Address" },
-      { "property": "timestamp", "title": "Last Heard" }
+      { "property": "timestamp", "title": "Last Communication" },
+      { "property": "SiteSettings_HardwarePlatform", "title": "Hardware" },
+      { "property": "SiteSettings_DmConfiguration", "title": "Configuration" },
+      { "property": "SiteSettings_EgmOptions", "title": "Protocol" },
+      { "property": "PlatformInformation_ApplicationVersion", "title": "Apps" },
+      { "property": "PlatformInformation_ContentVersion", "title": "Content" }
     ]
   }
 }
