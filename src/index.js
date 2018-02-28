@@ -15,10 +15,15 @@ const engine = require("./engine.js").createEngine(
   fetch
 );
 
+const actionHandler = require("./actionHandler.js").createActionHandler(
+  config,
+  fetch
+);
 const schema = require("./graphql.js").createSchema(watchList, deviceStore);
 const websocket = require("./websocket.js").createWebsocket(
   io,
   deviceStore,
+  actionHandler,
   config
 );
 
