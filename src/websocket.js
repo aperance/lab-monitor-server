@@ -1,10 +1,14 @@
 exports.createWebsocket = (io, deviceStore, actionHandler, config) => {
   io.on("connection", socket => {
     console.log("websocket conneted");
+
     socket.emit("SET_CONFIGURATION", config.client);
     socket.emit("POPULATE_TABLE", deviceStore.getAllState());
-    socket.on("REQUEST_ACTION", (targets, type, response) => {
-      actionHandler(targets, type)
+    socket.emit("POPULATE_HISTORY", deviceStore.getAllHistory());
+
+    socket.on("REQUEST_ACTION", (targets, type, parameters, response) => {
+      console.log("REQUEST_ACTION received");
+      actionHandler(targets, type, parameters)
         .then(result => response(result))
         .catch(err => response(err));
     });

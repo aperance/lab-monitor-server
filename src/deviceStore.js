@@ -19,6 +19,13 @@ class DeviceStore {
     }, {});
   }
 
+  getAllHistory() {
+    return Array.from(this._deviceData).reduce((acc, [key, { history }]) => {
+      acc[key] = history;
+      return acc;
+    }, {});
+  }
+
   set(id, newState) {
     if (typeof id != "string" || typeof newState != "object") {
       throw new TypeError("Invalid Input");
