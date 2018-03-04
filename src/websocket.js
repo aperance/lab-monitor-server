@@ -1,4 +1,10 @@
-exports.createWebsocket = (io, deviceStore, actionHandler, config) => {
+exports.createWebsocket = (
+  io,
+  deviceStore,
+  actionHandler,
+  psToolsHandler,
+  config
+) => {
   io.on("connection", socket => {
     console.log("websocket conneted");
 
@@ -11,6 +17,13 @@ exports.createWebsocket = (io, deviceStore, actionHandler, config) => {
       actionHandler(targets, type, parameters)
         .then(result => response(result))
         .catch(err => response(err));
+    });
+
+    socket.on("PSTOOLS", (target, mode, cmd, response) => {
+      // actionHandler(targets, type, parameters)
+      //   .then(result => response(result))
+      //   .catch(err => response(err));
+      response(psToolsHandler(target, mode, cmd));
     });
   });
 
