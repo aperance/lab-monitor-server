@@ -31,9 +31,11 @@ class DeviceStore {
       throw new TypeError("Invalid Input");
     }
 
-    newState.timestamp = new Date()
+    const timestamp = new Date()
       .toLocaleString("en-US", this._dateFormat)
       .replace(/,/g, "");
+
+    newState.timestamp = timestamp;
 
     const { state, history } = this._deviceData.get(id) || {
       state: {},
@@ -48,21 +50,31 @@ class DeviceStore {
       return acc;
     }, {});
 
-    const modifiedHistory = modifiedKeys
-      .filter(key => key != "timestamp") // Exclude timestamp from history
-      .reduce((acc, key) => {
-        acc[key] = history[key] || []; // Copy property history to accumulator (or empty array if added property)
-        acc[key].unshift([Date.now(), newState[key] || null]); // Add new value to front of array (or null if property was removed)
+    const modifiedHistory = modifiedKeys.map(key => [
+      key,
+      [timestamp, newState[key] || null]
+    ]);
+
+    const newHistory = modifiedHistory.reduce(
+      (acc, [key, newRecord]) => {
+        if (!acc[key]) acc[key] = []; // Copy property history to accumulator (or empty array if added property)
+        acc[key] = [newRecord, ...acc[key]]; // Add new value to front of array (or null if property was removed)
         while (acc[key].length > this._maxSize) acc[key].pop(); // Limit array length to maxSize setting
         return acc;
-      }, {});
+      },
+      { ...history }
+    );
 
     this._deviceData.set(id, {
       state: newState,
-      history: { ...history, ...modifiedHistory }
+      history: newHistory
     });
 
-    this.emitter.emit("update", { id, changes: modifiedState });
+    this.emitter.emit("update", {
+      id,
+      state: modifiedState,
+      history: modifiedHistory
+    });
   }
 }
 

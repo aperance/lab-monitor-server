@@ -20,15 +20,18 @@ exports.createWebsocket = (
     });
 
     socket.on("PSTOOLS", (target, mode, cmd, response) => {
-      // actionHandler(targets, type, parameters)
-      //   .then(result => response(result))
-      //   .catch(err => response(err));
-      response(psToolsHandler(target, mode, cmd));
+      psToolsHandler(target, mode, cmd, (err, stdout, stderr) => {
+        console.log(err);
+        console.log("stdout: " + stdout);
+        console.log("stderr: " + stderr);
+
+        response("$" + "\r\n" + stderr + stdout);
+      });
     });
   });
 
-  deviceStore.emitter.on("update", updatedRow => {
+  deviceStore.emitter.on("update", data => {
     console.log("emitter fired");
-    io.emit("UPDATE_ROW", updatedRow);
+    io.emit("UPDATE_ROW", data);
   });
 };
