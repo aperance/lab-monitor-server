@@ -1,18 +1,14 @@
 class DeviceStore {
   constructor(config) {
     this._deviceData = new Map();
-    this._callbackOnUpdate = null;
-    this._maxSize = config.history.maxSize;
+    this._get = id => this._deviceData.get(id) || { state: {}, history: {} };
     this._timestamp = () =>
       new Date().toLocaleString("en-US", config.dateFormat).replace(/,/g, "");
+    this._maxSize = config.history.maxSize;
   }
 
   onUpdate(callback) {
     this._callbackOnUpdate = callback;
-  }
-
-  get(id) {
-    return this._deviceData.get(id) || { state: {}, history: {} };
   }
 
   getAll() {
@@ -31,7 +27,7 @@ class DeviceStore {
       throw new TypeError("Invalid Input");
     }
 
-    const { state: prevState, history: prevHistory } = this.get(id);
+    const { state: prevState, history: prevHistory } = this._get(id);
 
     const modifiedKeys = Object.keys({ ...prevState, ...newState }) // Get array of all keys in both state objects
       .filter(key => prevState[key] != newState[key]); // Remove properties that were not modified
