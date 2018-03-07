@@ -8,12 +8,13 @@ const graphqlHTTP = require("express-graphql");
 const config = require("../config.json");
 const watchList = require("./watchList.js").createWatchList(config);
 const deviceStore = require("./deviceStore.js").createDeviceStore(config);
-const engine = require("./engine.js").createEngine(
+const poll = require("./poll.js").createPoll(
   watchList,
   deviceStore,
   config,
   fetch
 );
+const engine = require("./engine.js").createEngine(watchList, poll, config);
 
 const actionHandler = require("./actionHandler.js").createActionHandler(
   config,
