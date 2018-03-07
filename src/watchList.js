@@ -1,10 +1,9 @@
 class WatchList {
   constructor(config) {
     this._map = new Map();
-    this._range = config.watchList.range;
     this._timeout = config.watchList.staleDataTimeout;
 
-    this._range.forEach(({ subnet, start, end }) => {
+    config.watchList.range.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         this._map.set(subnet.slice(0, -1) + i, 0);
       }
