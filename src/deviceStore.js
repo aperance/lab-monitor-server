@@ -1,29 +1,29 @@
-const events = require("events");
-
 class DeviceStore {
   constructor(config) {
     this._deviceData = new Map();
-    this.emitter = new events.EventEmitter();
+    this._callbackOnUpdate = null;
     this._maxSize = config.history.maxSize;
-    this._dateFormat = config.dateFormat;
+    this._timestamp = () =>
+      new Date().toLocaleString("en-US", config.dateFormat).replace(/,/g, "");
+  }
+
+  onUpdate(callback) {
+    this._callbackOnUpdate = callback;
   }
 
   get(id) {
-    return this._deviceData.get(id);
+    return this._deviceData.get(id) || { state: {}, history: {} };
   }
 
-  getAllState() {
-    return Array.from(this._deviceData).reduce((acc, [key, { state }]) => {
-      acc[key] = state;
-      return acc;
-    }, {});
-  }
-
-  getAllHistory() {
-    return Array.from(this._deviceData).reduce((acc, [key, { history }]) => {
-      acc[key] = history;
-      return acc;
-    }, {});
+  getAll() {
+    return Array.from(this._deviceData).reduce(
+      (acc, [key, { state, history }]) => {
+        acc.state[key] = state;
+        acc.history[key] = history;
+        return acc;
+      },
+      { state: {}, history: {} }
+    );
   }
 
   set(id, newState) {
@@ -31,19 +31,10 @@ class DeviceStore {
       throw new TypeError("Invalid Input");
     }
 
-    const timestamp = new Date()
-      .toLocaleString("en-US", this._dateFormat)
-      .replace(/,/g, "");
+    const { state: prevState, history: prevHistory } = this.get(id);
 
-    newState.timestamp = timestamp;
-
-    const { state, history } = this._deviceData.get(id) || {
-      state: {},
-      history: {}
-    };
-
-    const modifiedKeys = Object.keys({ ...state, ...newState }) // Get array of all keys in both state objects
-      .filter(key => state[key] != newState[key]); // Remove properties that were not modified
+    const modifiedKeys = Object.keys({ ...prevState, ...newState }) // Get array of all keys in both state objects
+      .filter(key => prevState[key] != newState[key]); // Remove properties that were not modified
 
     const modifiedState = modifiedKeys.reduce((acc, key) => {
       acc[key] = newState[key] || null;
@@ -52,7 +43,7 @@ class DeviceStore {
 
     const modifiedHistory = modifiedKeys.map(key => [
       key,
-      [timestamp, newState[key] || null]
+      [this._timestamp(), newState[key] || null]
     ]);
 
     const newHistory = modifiedHistory.reduce(
@@ -62,19 +53,20 @@ class DeviceStore {
         while (acc[key].length > this._maxSize) acc[key].pop(); // Limit array length to maxSize setting
         return acc;
       },
-      { ...history }
+      { ...prevHistory }
     );
 
     this._deviceData.set(id, {
-      state: newState,
+      state: { ...newState, timestamp: this._timestamp() },
       history: newHistory
     });
 
-    this.emitter.emit("update", {
-      id,
-      state: modifiedState,
-      history: modifiedHistory
-    });
+    if (this._callbackOnUpdate)
+      this._callbackOnUpdate({
+        id,
+        state: { ...modifiedState, timestamp: this._timestamp() },
+        history: modifiedHistory
+      });
   }
 }
 

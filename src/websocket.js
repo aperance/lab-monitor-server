@@ -6,11 +6,12 @@ exports.createWebsocket = (
   config
 ) => {
   io.on("connection", socket => {
-    console.log("websocket conneted");
+    socket.emit("CONFIGURATION", config.client);
+    socket.emit("DEVICE_DATA_ALL", deviceStore.getAll());
 
-    socket.emit("SET_CONFIGURATION", config.client);
-    socket.emit("POPULATE_TABLE", deviceStore.getAllState());
-    socket.emit("POPULATE_HISTORY", deviceStore.getAllHistory());
+    deviceStore.onUpdate(data => {
+      socket.emit("DEVICE_DATA_UPDATE", data);
+    });
 
     socket.on("REQUEST_ACTION", (targets, type, parameters, response) => {
       console.log("REQUEST_ACTION received");
@@ -28,10 +29,5 @@ exports.createWebsocket = (
         response("$" + "\r\n" + stderr + stdout);
       });
     });
-  });
-
-  deviceStore.emitter.on("update", data => {
-    console.log("emitter fired");
-    io.emit("UPDATE_ROW", data);
   });
 };
