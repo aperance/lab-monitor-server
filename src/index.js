@@ -3,7 +3,6 @@ const server = require("http").createServer(app);
 const io = require("socket.io").listen(server);
 const fetch = require("node-fetch");
 const exec = require("child_process").exec;
-const graphqlHTTP = require("express-graphql");
 
 const config = require("../config.json");
 const watchList = require("./watchList.js").createWatchList(config);
@@ -24,7 +23,6 @@ const psToolsHandler = require("./psToolsHandler.js").createPsToolsHandler(
   config,
   exec
 );
-const schema = require("./graphql.js").createSchema(watchList, deviceStore);
 const websocket = require("./websocket.js").createWebsocket(
   io,
   deviceStore,
@@ -32,8 +30,6 @@ const websocket = require("./websocket.js").createWebsocket(
   psToolsHandler,
   config
 );
-
-app.use("/graphql", graphqlHTTP({ schema, rootValue: global, graphiql: true }));
 
 app.get("/", (req, res) => res.send("GET request to the homepage"));
 
