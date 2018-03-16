@@ -21,13 +21,7 @@ exports.createWebsocket = (
     });
 
     socket.on("PSTOOLS", (target, mode, cmd, response) => {
-      psToolsHandler(target, mode, cmd, (err, stdout, stderr) => {
-        console.log(err);
-        console.log("stdout: " + stdout);
-        console.log("stderr: " + stderr);
-
-        response("$" + "\r\n" + stderr + stdout);
-      });
+      psToolsHandler(target, mode, cmd, response);
     });
   });
 };
