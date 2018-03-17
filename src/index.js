@@ -1,6 +1,6 @@
 const app = require("express")();
 const server = require("http").createServer(app);
-const io = require("socket.io").listen(server);
+const ws = require("ws");
 const fetch = require("node-fetch");
 const exec = require("child_process").exec;
 
@@ -23,8 +23,9 @@ const psToolsHandler = require("./psToolsHandler.js").createPsToolsHandler(
   config,
   exec
 );
-const websocket = require("./websocket.js").createWebsocket(
-  io,
+
+const websocket = require("./webSocket.js").createWebsocket(
+  ws,
   deviceStore,
   actionHandler,
   psToolsHandler,
