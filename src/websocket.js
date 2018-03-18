@@ -16,7 +16,7 @@ exports.createWebsocket = (
     const { pathname, query } = url.parse(req.url, true);
     if (pathname === "/vnc") vncProxy(socket, query);
     else {
-      console.log("data ws received");
+      console.log("client connected");
 
       socket.send(
         JSON.stringify({
@@ -32,6 +32,10 @@ exports.createWebsocket = (
         })
       );
 
+      deviceStore.onUpdate(data => {
+        socket.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
+      });
+
       socket.on("message", function incoming(message) {
         const data = JSON.parse(message);
         switch (data.type) {
@@ -41,13 +45,13 @@ exports.createWebsocket = (
               //.then(result => response(result))
               .catch(err => response(err));
             break;
+          case "PSTOOLS":
+            console.log("PSTOOLS command received");
+            psToolsHandler(data.target, data.mode, data.cmd);
+            break;
           default:
             break;
         }
-      });
-
-      deviceStore.onUpdate(data => {
-        socket.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
       });
     }
   });

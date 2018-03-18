@@ -1,5 +1,5 @@
 exports.createPsToolsHandler = (config, exec) => {
-  return (target, mode, cmd, response) => {
+  return (target, mode, cmd) => {
     const str =
       "C:\\PSTools\\" +
       (mode === "psExec" ? "psexec -d -i " : "") +
@@ -12,9 +12,9 @@ exports.createPsToolsHandler = (config, exec) => {
       config.psTools.password +
       " " +
       cmd;
-
-    exec(str, (err, stdout, stderr) => {
-      response("$ " + str + "\r\n" + stdout + stderr);
-    });
+    exec(str);
+    // exec(str, (err, stdout, stderr) => {
+    //   response("$ " + str + "\r\n" + stdout + stderr);
+    // });
   };
 };
