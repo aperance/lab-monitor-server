@@ -6,6 +6,7 @@ exports.createWebsocket = (
   deviceStore,
   actionHandler,
   psToolsHandler,
+  vncProxy,
   config
 ) => {
   const server = new ws.Server({ port: 4000 });
@@ -13,8 +14,8 @@ exports.createWebsocket = (
 
   server.on("connection", (socket, req) => {
     const { pathname, query } = url.parse(req.url, true);
-
-    if (pathname === "/data") {
+    if (pathname === "/vnc") vncProxy(socket, query);
+    else {
       console.log("data ws received");
 
       socket.send(
@@ -47,46 +48,6 @@ exports.createWebsocket = (
 
       deviceStore.onUpdate(data => {
         socket.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
-      });
-    } else if (pathname === "/vnc") {
-      console.log("vnc ws received");
-
-      const vnc = net.createConnection(query.port, query.ip, () => {
-        console.log("VNC connection established");
-      });
-
-      vnc.on("data", data => {
-        try {
-          socket.send(data);
-        } catch (e) {
-          console.log("Client closed, cleaning up target");
-          vnc.end();
-        }
-      });
-
-      vnc.on("end", () => {
-        console.log("target disconnected");
-        socket.close();
-      });
-
-      vnc.on("error", () => {
-        console.log("target connection error");
-        vnc.end();
-        socket.close();
-      });
-
-      socket.on("message", msg => vnc.write(msg));
-
-      socket.on("close", (code, reason) => {
-        console.log(
-          "WebSocket client disconnected: " + code + " [" + reason + "]"
-        );
-        vnc.end();
-      });
-
-      socket.on("error", e => {
-        console.log("WebSocket client error: " + e);
-        vnc.end();
       });
     }
   });
