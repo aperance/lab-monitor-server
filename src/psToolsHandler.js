@@ -12,9 +12,11 @@ exports.createPsToolsHandler = (config, exec) => {
       config.psTools.password +
       " " +
       cmd;
-    exec(str);
-    // exec(str, (err, stdout, stderr) => {
-    //   response("$ " + str + "\r\n" + stdout + stderr);
-    // });
+
+    return new Promise((resolve, reject) => {
+      exec(str, (err, stdout, stderr) => {
+        resolve("$ " + str + "\r\n" + stdout + stderr);
+      });
+    });
   };
 };

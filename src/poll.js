@@ -8,24 +8,24 @@ exports.createPoll = (watchList, deviceStore, config, fetch) => {
 
     if (watchList.has(ipAddress)) {
       watchList.update(ipAddress);
+      console.log("Fetching " + ipAddress + (count ? ", retry " + count : ""));
 
-      const url =
-        ipAddress + ":" + port + resource + "?" + sequenceKey + "=" + sequence;
+      const url = "http://" + ipAddress + ":" + port + resource;
 
-      console.log("fetching " + url);
-
-      fetch("http://" + url, { timeout })
+      fetch(url + "?" + sequenceKey + "=" + sequence, { timeout })
         .then(res => res.text())
         .then(res => {
           const state = evalWrapper(res.replace("display(", "("));
+          console.log("Received state from " + ipAddress);
           deviceStore.set(ipAddress, state);
           poll(poll, ipAddress, state[sequenceKey] || 0, 0);
         })
         .catch(err => {
-          if (err == "EvalError") console.log("Error parsing state object");
+          if (err == "EvalError")
+            console.log("Error parsing state object from " + ipAddress);
           else if (err.type == "request-timeout") {
             if (count < maxRetries) {
-              console.log("retry " + (count + 1));
+              console.log("No reponse received from " + ipAddress);
               setTimeout(poll, retryInterval, poll, ipAddress, 0, count + 1);
             }
           } else console.log(err);

@@ -2,6 +2,7 @@ const app = require("express")();
 const server = require("http").createServer(app);
 const ws = require("ws");
 const net = require("net");
+const url = require("url");
 const fetch = require("node-fetch");
 const exec = require("child_process").exec;
 
@@ -30,6 +31,8 @@ const vncProxy = require("./vncProxy.js").createVncProxy(net);
 
 const websocket = require("./webSocket.js").createWebsocket(
   ws,
+  net,
+  url,
   deviceStore,
   actionHandler,
   psToolsHandler,

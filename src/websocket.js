@@ -1,8 +1,7 @@
-const net = require("net");
-const url = require("url");
-
 exports.createWebsocket = (
   ws,
+  net,
+  url,
   deviceStore,
   actionHandler,
   psToolsHandler,
@@ -38,17 +37,30 @@ exports.createWebsocket = (
 
       socket.on("message", function incoming(message) {
         const data = JSON.parse(message);
+
         switch (data.type) {
           case "DEVICE_ACTION":
             console.log("DEVICE_ACTION received");
             actionHandler(data.targets, data.action, data.parameters)
-              //.then(result => response(result))
-              .catch(err => response(err));
+              .then(results => {
+                console.log(result);
+                socket.send(
+                  JSON.stringify({ type: "DEVICE_ACTION_RESPONSE", result })
+                );
+              })
+              .catch(err => console.log(err));
             break;
-          case "PSTOOLS":
+
+          case "PSTOOLS_COMMAND":
             console.log("PSTOOLS command received");
-            psToolsHandler(data.target, data.mode, data.cmd);
+            psToolsHandler(data.target, data.mode, data.cmd)
+              .then(result => {
+                console.log(result);
+                JSON.stringify({ type: "PSTOOLS_COMMAND_RESPONSE", result });
+              })
+              .catch(err => console.log(err));
             break;
+
           default:
             break;
         }
@@ -56,13 +68,3 @@ exports.createWebsocket = (
     }
   });
 };
-
-// socket.on("PSTOOLS", (target, mode, cmd, response) => {
-//   psToolsHandler(target, mode, cmd, (err, stdout, stderr) => {
-//     console.log(err);
-//     console.log("stdout: " + stdout);
-//     console.log("stderr: " + stderr);
-
-//     response("$" + "\r\n" + stderr + stdout);
-//   });
-// });
