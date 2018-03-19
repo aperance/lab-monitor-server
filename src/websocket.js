@@ -42,7 +42,7 @@ exports.createWebsocket = (
           case "DEVICE_ACTION":
             console.log("DEVICE_ACTION received");
             actionHandler(data.targets, data.action, data.parameters)
-              .then(results => {
+              .then(result => {
                 console.log(result);
                 socket.send(
                   JSON.stringify({ type: "DEVICE_ACTION_RESPONSE", result })
