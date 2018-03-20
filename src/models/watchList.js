@@ -1,31 +1,37 @@
 class WatchList {
-  constructor(config) {
+  constructor(poll, config) {
     this._map = new Map();
+    this._poll = poll;
     this._timeout = config.watchList.staleDataTimeout;
+    this._checkInterval = config.watchList.checkInterval;
 
     config.watchList.range.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         this._map.set(subnet.slice(0, -1) + i, 0);
       }
     });
+
+    setInterval(this._scanList.bind(this), this._checkInterval);
+    this._scanList();
   }
 
-  get() {
+  _scanList() {
     return Array.from(this._map)
       .filter(([, timestamp]) => timestamp < Date.now() - this._timeout)
-      .map(([ipAddress]) => ipAddress);
+      .forEach(([ipAddress]) => {
+        this._poll(this._poll, this.check.bind(this), ipAddress);
+      });
+  }
+
+  check(ipAddress) {
+    if (this._map.has(ipAddress)) {
+      this._map.set(ipAddress, Date.now());
+      return true;
+    } else return false;
   }
 
   add(ipAddress) {
-    if (!this.has(ipAddress)) this._map.set(ipAddress, 0);
-  }
-
-  update(ipAddress) {
-    if (this.has(ipAddress)) this._map.set(ipAddress, Date.now());
-  }
-
-  has(ipAddress) {
-    return this._map.has(ipAddress);
+    if (!this._map.has(ipAddress)) this._map.set(ipAddress, 0);
   }
 
   delete(ipAddress) {
@@ -33,4 +39,4 @@ class WatchList {
   }
 }
 
-exports.createWatchList = config => new WatchList(config);
+exports.createWatchList = (poll, config) => new WatchList(poll, config);
