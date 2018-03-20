@@ -19,7 +19,7 @@ class WatchList {
     return Array.from(this._map)
       .filter(([, timestamp]) => timestamp < Date.now() - this._timeout)
       .forEach(([ipAddress]) => {
-        this._poll(this._poll, this.check.bind(this), ipAddress);
+        this._poll(ipAddress, this);
       });
   }
 

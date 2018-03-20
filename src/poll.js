@@ -1,16 +1,15 @@
 exports.createPoll = (deviceStore, config, fetch) => {
-  return (poll, check, ipAddress, sequence = 0, count = 0) => {
+  const poll = (ipAddress, watchList, sequence = 0, count = 0) => {
     const {
       fetch: { port, resource, sequenceKey, timeout },
       retryInterval,
       maxRetries
     } = config.polling;
 
-    if (!check(ipAddress)) return;
-
-    console.log("Fetching " + ipAddress + (count ? ", retry " + count : ""));
+    if (!watchList.check(ipAddress)) return;
 
     const url = "http://" + ipAddress + ":" + port + resource;
+    console.log("Fetching " + ipAddress + (count ? ", retry " + count : ""));
 
     fetch(url + "?" + sequenceKey + "=" + sequence, { timeout })
       .then(res => res.text())
@@ -18,7 +17,7 @@ exports.createPoll = (deviceStore, config, fetch) => {
         const state = evalWrapper(res.replace("display(", "("));
         console.log("Received state from " + ipAddress);
         deviceStore.set(ipAddress, state);
-        poll(poll, check, ipAddress, state[sequenceKey] || 0, 0);
+        poll(ipAddress, watchList, state[sequenceKey] || 0, 0);
       })
       .catch(err => {
         if (err == "EvalError")
@@ -26,15 +25,7 @@ exports.createPoll = (deviceStore, config, fetch) => {
         else if (err.type == "request-timeout") {
           if (count < maxRetries) {
             console.log("No reponse received from " + ipAddress);
-            setTimeout(
-              poll,
-              retryInterval,
-              poll,
-              check,
-              ipAddress,
-              0,
-              count + 1
-            );
+            setTimeout(poll, retryInterval, ipAddress, watchList, 0, count + 1);
           }
         } else console.log(err);
       });
@@ -47,4 +38,5 @@ exports.createPoll = (deviceStore, config, fetch) => {
       }
     };
   };
+  return poll;
 };
