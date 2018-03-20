@@ -41,6 +41,7 @@ exports.createWebsocket = (
         switch (data.type) {
           case "DEVICE_ACTION":
             console.log("DEVICE_ACTION received");
+
             actionHandler(data.targets, data.action, data.parameters)
               .then(result => {
                 console.log(result);
@@ -49,16 +50,21 @@ exports.createWebsocket = (
                 );
               })
               .catch(err => console.log(err));
+
             break;
 
           case "PSTOOLS_COMMAND":
             console.log("PSTOOLS command received");
+
             psToolsHandler(data.target, data.mode, data.cmd)
               .then(result => {
                 console.log(result);
-                JSON.stringify({ type: "PSTOOLS_COMMAND_RESPONSE", result });
+                socket.send(
+                  JSON.stringify({ type: "PSTOOLS_COMMAND_RESPONSE", result })
+                );
               })
               .catch(err => console.log(err));
+
             break;
 
           default:
