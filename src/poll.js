@@ -1,5 +1,5 @@
-exports.createPoll = (deviceStore, config, fetch) => {
-  const poll = (ipAddress, watchList, sequence = 0, count = 0) => {
+exports.createPoll = (deviceStore, watchList, config, fetch) => {
+  const poll = (ipAddress, sequence = 0, count = 0) => {
     const {
       fetch: { port, resource, sequenceKey, timeout },
       retryInterval,
@@ -17,7 +17,7 @@ exports.createPoll = (deviceStore, config, fetch) => {
         const state = evalWrapper(res.replace("display(", "("));
         console.log("Received state from " + ipAddress);
         deviceStore.set(ipAddress, state);
-        poll(ipAddress, watchList, state[sequenceKey] || 0, 0);
+        poll(ipAddress, state[sequenceKey] || 0, 0);
       })
       .catch(err => {
         if (err == "EvalError")
@@ -25,7 +25,7 @@ exports.createPoll = (deviceStore, config, fetch) => {
         else if (err.type == "request-timeout") {
           if (count < maxRetries) {
             console.log("No reponse received from " + ipAddress);
-            setTimeout(poll, retryInterval, ipAddress, watchList, 0, count + 1);
+            setTimeout(poll, retryInterval, ipAddress, 0, count + 1);
           }
         } else console.log(err);
       });

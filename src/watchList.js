@@ -1,7 +1,7 @@
 class WatchList {
-  constructor(poll, config) {
+  constructor(config) {
     this._map = new Map();
-    this._poll = poll;
+    this._poll = null;
     this._timeout = config.watchList.staleDataTimeout;
     this._checkInterval = config.watchList.checkInterval;
 
@@ -10,17 +10,20 @@ class WatchList {
         this._map.set(subnet.slice(0, -1) + i, 0);
       }
     });
-
-    setInterval(this._scanList.bind(this), this._checkInterval);
-    this._scanList();
   }
 
-  _scanList() {
+  _scan() {
     return Array.from(this._map)
       .filter(([, timestamp]) => timestamp < Date.now() - this._timeout)
       .forEach(([ipAddress]) => {
-        this._poll(ipAddress, this);
+        this._poll(ipAddress);
       });
+  }
+
+  startScanning(poll) {
+    this._poll = poll;
+    setInterval(this._scan.bind(this), this._checkInterval);
+    this._scan();
   }
 
   check(ipAddress) {
@@ -39,4 +42,4 @@ class WatchList {
   }
 }
 
-exports.createWatchList = (poll, config) => new WatchList(poll, config);
+exports.createWatchList = config => new WatchList(config);
