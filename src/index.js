@@ -8,16 +8,9 @@ const exec = require("child_process").exec;
 
 const config = require("../config.json");
 
-const deviceStore = require("./models/deviceStore.js").createDeviceStore(
-  config
-);
+const deviceStore = require("./deviceStore.js").createDeviceStore(config);
 const poll = require("./poll.js").createPoll(deviceStore, config, fetch);
-
-const watchList = require("./models/watchList.js").createWatchList(
-  poll,
-  config
-);
-// const engine = require("./engine.js").createEngine(watchList, poll, config);
+const watchList = require("./watchList.js").createWatchList(poll, config);
 
 const actionHandler = require("./actionHandler.js").createActionHandler(
   config,
