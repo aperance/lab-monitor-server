@@ -31,7 +31,7 @@ exports.createWebsocket = (
         })
       );
 
-      deviceStore.onUpdate(data => {
+      deviceStore.subscribe(data => {
         socket.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
       });
 
