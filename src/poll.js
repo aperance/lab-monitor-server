@@ -46,16 +46,15 @@ exports.createPoll = (deviceStore, watchList, config, fetch) => {
       .catch(err => {
         // On timeout, if retry count is less that maxRetry setting, retry polling
         // after retryInterval. Reset sequence key to 0. Increment retry count.
-        if (err.type == "request-timeout") {
+        if (err.type == "request-timeout" || err.code =="ETIMEDOUT") {
           if (count < maxRetries) {
             console.log("No reponse received from " + ipAddress);
             setTimeout(poll, retryInterval, ipAddress, 0, count + 1);
           }
-        } else {
-          if (err == "EvalError")
-            console.log("Error parsing response from " + ipAddress);
-          console.log(err);
         }
+        else if (err.code == "ECONNREFUSED") console.log("Connection actively refused by " + ipAddress);
+        else if (err == "EvalError") console.log("Error parsing response from " + ipAddress);
+        else console.log(err);
       });
 
     // Wrapper function to catch errors parsing response string.
