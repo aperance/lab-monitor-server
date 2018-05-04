@@ -15,7 +15,7 @@ exports.createPoll = (deviceStore, watchList, config, fetch) => {
   const poll = (ipAddress, sequence = 0, count = 0) => {
     // Extract necessary values from config object.
     const {
-      fetch: { port, resource, sequenceKey, timeout },
+      fetch: { port, resource, sequenceKey },
       retryInterval,
       maxRetries
     } = config.polling;
@@ -29,27 +29,32 @@ exports.createPoll = (deviceStore, watchList, config, fetch) => {
     // Add query string with sequence key, if not 0
     url += "?" + sequenceKey + "=" + sequence;
 
-    console.log("Fetching " + url);
+    //console.log("Fetching " + url);
 
     // Fetch state data from device, using url and timeout value from config.
-    fetch(url, { timeout })
+    fetch(url, { timeout: 60000 })
       // Extract string from response object.
       .then(res => res.text())
       // Parse result string, saving data to device store. Perform new poll,
       // with latest sequence key (if exists), resetting retry count to 0.
       .then(res => {
         const state = evalWrapper(res.replace("display(", "("));
-        console.log("Received state from " + ipAddress);
+        //console.log("Received state from " + ipAddress);
         deviceStore.set(ipAddress, state);
         poll(ipAddress, state[sequenceKey] || 0, 0);
       })
       .catch(err => {
+        if (err.type == "request-timeout") poll(ipAddress, 0, 0);
         // On timeout, if retry count is less that maxRetry setting, retry polling
         // after retryInterval. Reset sequence key to 0. Increment retry count.
-        if (err.type == "request-timeout" || err.code =="ETIMEDOUT") {
+        else if (err.code =="ETIMEDOUT") {
           if (count < maxRetries) {
-            console.log("No reponse received from " + ipAddress);
+            console.log("ETIMEDOUT: No reponse received from " + ipAddress + "(COUNT " + count + ")");
             setTimeout(poll, retryInterval, ipAddress, 0, count + 1);
+          }
+          else {
+            console.log(ipAddress + " inactive");
+            deviceStore.setInactive(ipAddress);
           }
         }
         else if (err.code == "ECONNREFUSED") console.log("Connection actively refused by " + ipAddress);

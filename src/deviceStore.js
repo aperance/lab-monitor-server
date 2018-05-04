@@ -81,7 +81,7 @@ class DeviceStore {
 
     // Save latest state and updated history objects to Map.
     this._deviceData.set(id, {
-      state: { ...newState, timestamp: this._timestamp() },
+      state: { ...newState, timestamp: this._timestamp(), active: true },
       history: newHistory
     });
 
@@ -89,10 +89,22 @@ class DeviceStore {
     if (this._subscriber)
       this._subscriber({
         id,
-        state: { ...modifiedState, timestamp: this._timestamp() },
+        state: { ...modifiedState, timestamp: this._timestamp(), active: true },
         history: modifiedHistory
       });
   }
+
+  setInactive(id) {
+    if (typeof id != "string") {
+      throw new TypeError("Invalid Input");
+    }
+    const { state, history } = this._get(id);
+    if (state.active === true) {
+      this._deviceData.set(id, { state: { ...state, active: false }, history });
+      if (this._subscriber) this._subscriber({ id, state: { active: false }, history: [] });
+    }
+  }
+
 }
 
 exports.createDeviceStore = config => new DeviceStore(config);
