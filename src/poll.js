@@ -12,7 +12,7 @@
 
 // Exports factory function used for dependency injection.
 exports.createPoll = (deviceStore, watchList, config, fetch) => {
-  const poll = (ipAddress, sequence = 0, count = 0, connectionStatus = false) => {
+  const poll = (ipAddress, sequence = 0, count = 0, status = "initial") => {
     // Extract necessary values from config object.
     const {
       fetch: { port, resource, sequenceKey },
@@ -39,32 +39,33 @@ exports.createPoll = (deviceStore, watchList, config, fetch) => {
       // with latest sequence key (if exists), resetting retry count to 0.
       .then(res => {
         const state = evalWrapper(res.replace("display(", "("));
-        //console.log("Received state from " + ipAddress);
+        if (status !== "connected") console.log("Connection established with " + ipAddress);
         deviceStore.set(ipAddress, state);
-        poll(ipAddress, state[sequenceKey] || 0, 0, true);
+        poll(ipAddress, state[sequenceKey] || 0, 0, "connected");
       })
       .catch(err => {
         if (err.type == "request-timeout") {
           console.log(ipAddress + " timed out. Restarting poll...");
-          poll(ipAddress, 0, 0, true);
+          poll(ipAddress, 0, 0, "connected");
         }
-        else if (err.code === "ETIMEDOUT" || "ECONNRESET") {
-          if (!connectionStatus) console.log("No connection established to " + ipAddress + ", stopping poll")
-          else if (count >= maxRetries) console.log("Maximum retries attempted for " + ipAddress + ", stopping poll")
-          else {
-            if (count === 0) {
-              console.log("Lost connection to " + ipAddress + ", setting inactive");
-              deviceStore.setInactive(ipAddress);
-            }
-            else console.log("Reconnection failed for " + ipAddress + "(Attempt " + count + ")");
-            // Retry polling after retryInterval. Reset sequence key to 0. Increment retry count.
-            //setTimeout(poll, retryInterval, ipAddress, 0, count + 1, true);
-            poll(ipAddress, 0, count + 1, true);
+        else {
+          if (status === "connected") {
+            console.log("Setting " + ipAddress + " as disconnected");
+            deviceStore.setInactive(ipAddress);
           }
+          if (err.code === "ETIMEDOUT" || "ECONNRESET" || "ECONNREFUSED") {
+            if (status === "initial") console.log("No device detected at " + ipAddress + ". Exiting.")
+            else {
+              if (count >= maxRetries) console.log("Maximum retries attempted for " + ipAddress + ", stopping poll");
+              else {
+                console.log("Connection failed for " + ipAddress + "(Attempt " + count + ")");
+                poll(ipAddress, 0, count + 1, "disconnected");
+              }
+            }
+          }
+          else if (err === "EvalError") console.log("Error parsing response from " + ipAddress);
+          else console.log(err);
         }
-        else if (err.code === "ECONNREFUSED") console.log("Connection actively refused by " + ipAddress);
-        else if (err === "EvalError") console.log("Error parsing response from " + ipAddress);
-        else console.log(err);
       });
 
     // Wrapper function to catch errors parsing response string.
