@@ -43,6 +43,7 @@ class WatchList {
     return Array.from(this._map)
       .filter(([, timestamp]) => timestamp < Date.now() - this._timeout)
       .forEach(([ipAddress]) => {
+        console.log("Initializing polling cycle for " + ipAddress)
         this._poll(ipAddress);
       });
   }
