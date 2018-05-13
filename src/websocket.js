@@ -11,6 +11,14 @@ exports.createWebsocket = (
   const server = new ws.Server({ port: 4000 });
   console.log("ws listening");
 
+  deviceStore.subscribe(data => {
+    server.clients.forEach(client => {
+      if (client.readyState === ws.OPEN) {
+        client.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
+      }
+    });
+  });
+
   server.on("connection", (socket, req) => {
     const { pathname, query } = url.parse(req.url, true);
     if (pathname === "/vnc") vncProxy(socket, query);
@@ -30,10 +38,6 @@ exports.createWebsocket = (
           ...deviceStore.getAll()
         })
       );
-
-      deviceStore.subscribe(data => {
-        socket.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
-      });
 
       socket.on("message", function incoming(message) {
         const data = JSON.parse(message);
