@@ -8,23 +8,25 @@ const exec = require("child_process").exec;
 
 const config = require("../config.json");
 
+const Watcher = require("./watcher.js");
 const deviceStore = require("./deviceStore.js").createDeviceStore(config);
-const watchList = require("./watchList.js").createWatchList(config);
-const poll = require("./poll.js").createPoll(
+const engine = require("./engine.js").createEngine(
+  Watcher,
   deviceStore,
-  watchList,
-  config,
-  fetch
+  fetch,
+  config
 );
 
 const actionHandler = require("./actionHandler.js").createActionHandler(
   config,
   fetch
 );
+
 const psToolsHandler = require("./psToolsHandler.js").createPsToolsHandler(
   config,
   exec
 );
+
 const vncProxy = require("./vncProxy.js").createVncProxy(net);
 
 const websocket = require("./webSocket.js").createWebsocket(
@@ -38,7 +40,8 @@ const websocket = require("./webSocket.js").createWebsocket(
   config
 );
 
-watchList.startScanning(poll);
+//watchList.startScanning(poll);
+engine.start();
 
 app.get("/", (req, res) => res.send("GET request to the homepage"));
 
