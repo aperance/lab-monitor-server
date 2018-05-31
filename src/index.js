@@ -8,14 +8,14 @@ const exec = require("child_process").exec;
 
 const config = require("../config.json");
 
-const Watcher = require("./watcher.js");
 const deviceStore = require("./deviceStore.js").createDeviceStore(config);
-const engine = require("./engine.js").createEngine(
-  Watcher,
+const Watcher = require("./watcher.js").createWatcherClass(
+  config,
   deviceStore,
-  fetch,
-  config
+  fetch
 );
+
+const engine = require("./engine.js").createEngine(Watcher, config);
 
 const actionHandler = require("./actionHandler.js").createActionHandler(
   config,
@@ -44,6 +44,13 @@ const websocket = require("./webSocket.js").createWebsocket(
 engine.start();
 
 app.get("/", (req, res) => res.send("GET request to the homepage"));
+
+app.get("/gc", (req, res) => {
+  if (global.gc) {
+    global.gc();
+    res.send("OK");
+  } else res.send("You must run program with 'node --expose-gc index.js'");
+});
 
 server.listen(8080);
 

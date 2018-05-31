@@ -1,4 +1,4 @@
-exports.createEngine = (Watcher, deviceStore, fetch, config) => ({
+exports.createEngine = (Watcher, config) => ({
   map: new Map(),
   obj: {},
 
@@ -11,7 +11,7 @@ exports.createEngine = (Watcher, deviceStore, fetch, config) => ({
   },
 
   add(ipAddress) {
-    const watcher = new Watcher(ipAddress, deviceStore, fetch, config);
+    const watcher = new Watcher(ipAddress);
     watcher.start();
     this.map.set(ipAddress, watcher);
     this.obj = { ...this.obj, ipAddress: watcher };
