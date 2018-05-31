@@ -1,158 +1,89 @@
-class Watcher {
-  constructor(ipAddress, deviceStore, fetch, config) {
-    const {
-      polling: { port, resource, sequenceKey, maxRetries }
-    } = config;
+const winston = require("winston");
 
-    this.ipAddress = ipAddress;
-    this.deviceStore = deviceStore;
-    this.fetch = fetch;
-    this.maxRetries = maxRetries;
-    this.sequenceKey = sequenceKey;
-    this.url =
-      "http://" + ipAddress + ":" + port + resource + "?" + sequenceKey + "=";
-  }
-
-  start() {
-    this.poll();
-  }
-
-  poll(sequence = 0, count = 0, status = "initial") {
-    // Fetch state data from device, using url and timeout value from config.
-    this.fetch(this.url + sequence, { timeout: 60000 })
-      // Extract string from response object.
-      .then(res => res.text())
-      // Parse result string, saving data to device store. Perform new poll,
-      // with latest sequence key (if exists), resetting retry count to 0.
-      .then(res => {
-        try {
-          return eval(res.replace("display(", "("));
-        } catch (e) {
-          throw new EvalError();
-        }
-      })
-      .then(deviceData => {
-        if (status !== "connected")
-          console.log("Connection established with " + this.ipAddress);
-        this.deviceStore.set(this.ipAddress, deviceData);
-        this.poll(deviceData[this.sequenceKey] || 0, 0, "connected");
-      })
-      .catch(err => this.errorHandler(err, count, status));
-  }
-
-  errorHandler(err, count, status) {
-    if (err.name === "FetchError" && err.type == "request-timeout") {
-      console.log(this.ipAddress + " timed out. Restarting poll...");
-      this.poll(0, 0, "connected");
-    } else {
-      if (status === "connected") {
-        console.log("Setting " + this.ipAddress + " as disconnected");
-        this.deviceStore.setInactive(this.ipAddress);
-      }
-      if (err.name === "EvalError")
-        console.log("Error parsing response from " + this.ipAddress);
-      else if (err.name === "FetchError" && err.type === "system") {
-        if (status === "initial")
-          console.log("No device detected at " + this.ipAddress + ". Exiting.");
-        else {
-          if (count >= this.maxRetries)
-            console.log("Maximum retries for " + this.ipAddress);
-          else {
-            console.log("Connection failed for " + this.ipAddress);
-            console.log("Attempt " + count);
-            this.poll(0, count + 1, "disconnected");
-          }
-        }
-      } else console.log(err);
+exports.createWatcherClass = (
+  { polling: { port, resource, sequenceKey, maxRetries } },
+  deviceStore,
+  fetch
+) => {
+  return class Watcher {
+    constructor(ipAddress) {
+      this.ipAddress = ipAddress;
+      this.url = "http://" + ipAddress + ":" + port + resource;
+      this.lastAttempt = null;
+      this.lastCommunication = null;
+      this.status = "initial";
+      this.logger = winston.createLogger({
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.printf(info => `${info.timestamp}: ${info.message}`)
+        ),
+        transports: [
+          new winston.transports.File({
+            filename: "logs/" + ipAddress + ".log"
+          })
+        ]
+      });
     }
-  }
-}
 
-module.exports = Watcher;
+    start() {
+      setInterval(() => {
+        if (
+          this.status === "disconnected" &&
+          Date.now() - this.lastCommunication < 300000
+        ) {
+          this.logger.info("Disconnected for over 5 min. Restarting.");
+          this.poll();
+        } else if (Date.now() - this.lastAttempt > 300000) {
+          this.logger.info("Recently disconnected. Restarting.");
+          this.poll();
+        }
+      }, 30000);
+      this.logger.info("Starting Polling...");
+      this.poll();
+    }
 
-// // Exports factory function used for dependency injection.
-// exports.createWatcher = (ipAddress, deviceStore, fetch, config) => {
-//   // Extract necessary values from config object.
-//   const {
-//     fetch: { port, resource, sequenceKey },
-//     retryInterval,
-//     maxRetries
-//   } = config.polling;
+    poll(sequence = 0) {
+      this.lastAttempt = Date.now();
+      // Fetch state data from device, using url and timeout value from config.
+      fetch(this.url + "?" + sequenceKey + "=" + sequence, { timeout: 60000 })
+        // Extract string from response object.
+        .then(res => res.text())
+        // Parse result string, saving data to device store. Perform new poll,
+        // with latest sequence key (if exists), resetting retry count to 0.
+        .then(str => {
+          try {
+            return eval(str.replace("display(", "("));
+          } catch (e) {
+            throw new EvalError();
+          }
+        })
+        .then(deviceData => {
+          if (this.status !== "connected") {
+            this.logger.info("Connection established");
+            this.status = "connected";
+          }
+          this.lastCommunication = Date.now();
+          deviceStore.set(this.ipAddress, deviceData);
+          this.poll(deviceData[sequenceKey]);
+        })
+        .catch(err => {
+          if (err.name === "FetchError" && err.type == "request-timeout") {
+            this.logger.info("Connection timed out. Retrying...");
+            this.poll();
+          } else this.errorHandler(err);
+        });
+    }
 
-//   // Construct url from IP address and configuration parameters.
-//   const url = "http://" + ipAddress + ":" + port + resource;
-
-//   const watcher = {
-//     state: 0,
-//     lastAttempt: null,
-//     start() {
-//       this.poll();
-//     },
-
-//     poll(sequence = 0, count = 0, status = "initial") {
-//       const evalWrapper = x => {
-//         try {
-//           return eval(x);
-//         } catch (e) {
-//           throw new EvalError();
-//         }
-//       };
-
-//       // Fetch state data from device, using url and timeout value from config.
-//       fetch(url + "?" + sequenceKey + "=" + sequence, { timeout: 60000 })
-//         // Extract string from response object.
-//         .then(res => res.text())
-//         // Parse result string, saving data to device store. Perform new poll,
-//         // with latest sequence key (if exists), resetting retry count to 0.
-//         .then(res => {
-//           const deviceData = evalWrapper(res.replace("display(", "("));
-//           if (status !== "connected")
-//             console.log("Connection established with " + ipAddress);
-//           deviceStore.set(ipAddress, deviceData);
-//           this.poll(deviceData[sequenceKey] || 0, 0, "connected");
-//         })
-//         .catch(err => this.errorHandler(err, count, status));
-//     },
-
-//     errorHandler(err, count, status) {
-//       if (err.type == "request-timeout") {
-//         console.log(ipAddress + " timed out. Restarting poll...");
-//         this.poll(0, 0, "connected");
-//       } else {
-//         if (status === "connected") {
-//           console.log("Setting " + ipAddress + " as disconnected");
-//           deviceStore.setInactive(ipAddress);
-//         }
-//         if (err.code === "ETIMEDOUT" || "ECONNRESET" || "ECONNREFUSED") {
-//           if (status === "initial")
-//             console.log("No device detected at " + ipAddress + ". Exiting.");
-//           else {
-//             if (count >= maxRetries)
-//               console.log(
-//                 "Maximum retries attempted for " + ipAddress + ", stopping poll"
-//               );
-//             else {
-//               console.log(
-//                 "Connection failed for " + ipAddress + "(Attempt " + count + ")"
-//               );
-//               this.poll(0, count + 1, "disconnected");
-//             }
-//           }
-//         } else if (err === "EvalError")
-//           console.log("Error parsing response from " + ipAddress);
-//         else console.log(err);
-//       }
-//     }
-//   };
-
-//   // Wrapper function to catch errors parsing response string.
-//   const evalWrapper = x => {
-//     try {
-//       return eval(x);
-//     } catch (e) {
-//       throw new EvalError();
-//     }
-//   };
-
-//   return watcher;
-// };
+    errorHandler(err) {
+      if (this.status === "connected") {
+        this.logger.info("Setting state as disconnected");
+        deviceStore.setInactive(this.ipAddress);
+      }
+      this.status = "disconnected";
+      if (err.name === "EvalError") this.logger.info("Error parsing response");
+      else if (err.name === "FetchError" && err.type === "system") {
+        this.logger.info("Unable to connect");
+      } else this.logger.info(err);
+    }
+  };
+};
