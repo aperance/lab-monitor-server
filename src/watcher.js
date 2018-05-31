@@ -1,51 +1,58 @@
 const winston = require("winston");
 
-exports.createWatcherClass = (
-  { polling: { port, resource, sequenceKey, maxRetries } },
-  deviceStore,
-  fetch
-) => {
+exports.createWatcherClass = (config, deviceStore, fetch) => {
+  const { port, resource, sequenceKey, maxRetries } = config.polling;
+  const logger = winston.createLogger({
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.printf(
+        info => `${info.timestamp}: ${info.label}: ${info.message}`
+      )
+    ),
+    transports: [
+      new winston.transports.File({
+        filename: "logs/watcher.log"
+      })
+    ],
+    exceptionHandlers: [
+      new winston.transports.File({ filename: "logs/exceptions.log" })
+    ]
+  });
+
   return class Watcher {
     constructor(ipAddress) {
       this.ipAddress = ipAddress;
-      this.url = "http://" + ipAddress + ":" + port + resource;
+      this.url = `http://${ipAddress}:${port}/${resource}`;
       this.lastAttempt = null;
       this.lastCommunication = null;
       this.status = "initial";
-      this.logger = winston.createLogger({
-        format: winston.format.combine(
-          winston.format.timestamp(),
-          winston.format.printf(info => `${info.timestamp}: ${info.message}`)
-        ),
-        transports: [
-          new winston.transports.File({
-            filename: "logs/" + ipAddress + ".log"
-          })
-        ]
-      });
+      this.timer = null;
     }
 
     start() {
-      setInterval(() => {
+      this.timer = setInterval(() => {
+        const sinceLastAttempt = Date.now() - this.lastAttempt;
+        const sinceLastCommunication = Date.now() - this.lastCommunication;
         if (
-          this.status === "disconnected" &&
-          Date.now() - this.lastCommunication < 300000
+          sinceLastAttempt > 600000 ||
+          (this.status === "disconnected" &&
+            sinceLastAttempt > 60000 &&
+            sinceLastCommunication < 600000)
         ) {
-          this.logger.info("Disconnected for over 5 min. Restarting.");
-          this.poll();
-        } else if (Date.now() - this.lastAttempt > 300000) {
-          this.logger.info("Recently disconnected. Restarting.");
+          this.log(
+            `Restarting poll (communication: ${sinceLastCommunication}, attempt: ${sinceLastAttempt}).`
+          );
           this.poll();
         }
       }, 30000);
-      this.logger.info("Starting Polling...");
+      this.log("Starting Polling...");
       this.poll();
     }
 
     poll(sequence = 0) {
       this.lastAttempt = Date.now();
       // Fetch state data from device, using url and timeout value from config.
-      fetch(this.url + "?" + sequenceKey + "=" + sequence, { timeout: 60000 })
+      fetch(`${this.url}?${sequenceKey}=${sequence}`, { timeout: 60000 })
         // Extract string from response object.
         .then(res => res.text())
         // Parse result string, saving data to device store. Perform new poll,
@@ -54,12 +61,12 @@ exports.createWatcherClass = (
           try {
             return eval(str.replace("display(", "("));
           } catch (e) {
-            throw new EvalError();
+            throw new EvalError("Unable to parse response string");
           }
         })
         .then(deviceData => {
           if (this.status !== "connected") {
-            this.logger.info("Connection established");
+            this.log("Connection established");
             this.status = "connected";
           }
           this.lastCommunication = Date.now();
@@ -68,22 +75,22 @@ exports.createWatcherClass = (
         })
         .catch(err => {
           if (err.name === "FetchError" && err.type == "request-timeout") {
-            this.logger.info("Connection timed out. Retrying...");
+            this.log("Connection timed out. Retrying...");
             this.poll();
-          } else this.errorHandler(err);
+          } else {
+            if (err.name === "FetchError" || "EvalError") this.log(err);
+
+            if (this.status !== "disconnected") {
+              this.log("Setting state as disconnected");
+              this.status = "disconnected";
+              deviceStore.setInactive(this.ipAddress);
+            }
+          }
         });
     }
 
-    errorHandler(err) {
-      if (this.status === "connected") {
-        this.logger.info("Setting state as disconnected");
-        deviceStore.setInactive(this.ipAddress);
-      }
-      this.status = "disconnected";
-      if (err.name === "EvalError") this.logger.info("Error parsing response");
-      else if (err.name === "FetchError" && err.type === "system") {
-        this.logger.info("Unable to connect");
-      } else this.logger.info(err);
+    log(message, level = "info") {
+      logger.log({ level, label: this.ipAddress, message });
     }
   };
 };
