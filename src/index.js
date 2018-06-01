@@ -1,10 +1,11 @@
 const app = require("express")();
-const server = require("http").createServer(app);
+const http = require("http");
 const ws = require("ws");
 const net = require("net");
 const url = require("url");
 const fetch = require("node-fetch");
-const exec = require("child_process").exec;
+const { exec } = require("child_process");
+const { promisify } = require("util");
 
 const config = require("../config.json");
 
@@ -12,7 +13,8 @@ const deviceStore = require("./deviceStore.js").createDeviceStore(config);
 const Watcher = require("./watcher.js").createWatcherClass(
   config,
   deviceStore,
-  fetch
+  fetch,
+  promisify(http.get)
 );
 
 const engine = require("./engine.js").createEngine(Watcher, config);
@@ -52,6 +54,7 @@ app.get("/gc", (req, res) => {
   } else res.send("You must run program with 'node --expose-gc index.js'");
 });
 
+const server = http.createServer(app);
 server.listen(8080);
 
 /* Load Demo Store Data */

@@ -12,7 +12,6 @@ exports.createEngine = (Watcher, config) => ({
 
   add(ipAddress) {
     const watcher = new Watcher(ipAddress);
-    watcher.start();
     this.map.set(ipAddress, watcher);
     this.obj = { ...this.obj, ipAddress: watcher };
   }
