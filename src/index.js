@@ -4,8 +4,12 @@ const ws = require("ws");
 const net = require("net");
 const url = require("url");
 const fetch = require("node-fetch");
+const winston = require("winston");
 const { exec } = require("child_process");
 const { promisify } = require("util");
+
+const logger = require("./logger.js").createLoggers(winston);
+const got = require("got");
 
 const config = require("../config.json");
 
@@ -13,8 +17,8 @@ const deviceStore = require("./deviceStore.js").createDeviceStore(config);
 const Watcher = require("./watcher.js").createWatcherClass(
   config,
   deviceStore,
-  fetch,
-  promisify(http.get)
+  got,
+  logger
 );
 
 const engine = require("./engine.js").createEngine(Watcher, config);
