@@ -1,84 +1,46 @@
-const winston = require("winston");
-const request = require("got");
-
-exports.createWatcherClass = (config, deviceStore, fetch, get) => {
-  const { port, path, sequenceKey, maxRetries } = config.polling;
-  const logger = winston.createLogger({
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.printf(
-        info => `${info.timestamp}: ${info.label}: ${info.message}`
-      )
-    ),
-    transports: [
-      new winston.transports.File({
-        filename: "logs/watcher.log"
-      })
-    ],
-    exceptionHandlers: [
-      new winston.transports.File({ filename: "logs/exceptions.log" })
-    ]
-  });
+exports.createWatcherClass = (config, deviceStore, request, log) => {
+  const { port, path, sequenceKey } = config.polling;
 
   return class Watcher {
     constructor(ipAddress) {
       this.ipAddress = ipAddress;
       this.url = `http://${ipAddress}:${port}/${path}?${sequenceKey}=`;
-      this.lastAttempt = null;
-      this.lastCommunication = null;
-      this._status = "initial";
-      this.timer = this.startWatchdog();
+      this.connected = false;
+      this.connectedTime = null;
+      this.timer = null;
       this.request = null;
+      this._log = log.bind(this);
 
-      this.log("Starting Polling...");
-      this.poll();
+      this._poll();
     }
 
-    set status(newStatus) {
-      if (newStatus !== this._status) this.log(`Device is ${newStatus}`);
-      this._status = newStatus;
-    }
-
-    startWatchdog() {
-      this.timer = setInterval(() => {
-        const sinceLastAttempt = Date.now() - this.lastAttempt;
-        const sinceLastCommunication = Date.now() - this.lastCommunication;
-        if (
-          sinceLastAttempt > 300000 ||
-          (sinceLastAttempt > 30000 && sinceLastCommunication < 600000)
-        ) {
-          this.log(
-            `Restarting poll (communication: ${sinceLastCommunication}, attempt: ${sinceLastAttempt}).`
-          );
-          if (this.request && this.request._isPending) this.request.cancel();
-          this.poll();
-        }
-      }, 15000);
-    }
-
-    async poll(sequence = 0) {
-      this.lastAttempt = Date.now();
+    async _poll(sequence = 0) {
+      if (!sequence) this._log("Starting Polling...");
+      this._resetWatchdog(1);
       // Fetch state data from device, using url and timeout value from config.
       this.request = request(this.url + sequence, { retries: 0 });
 
       try {
         const res = await this.request;
-        const deviceData = this.evalWrapper(res.body);
-        this.status = "connected";
-        this.lastCommunication = Date.now();
+        const deviceData = this._evalWrapper(res.body);
         deviceStore.set(this.ipAddress, deviceData);
-        this.poll(deviceData[sequenceKey]);
+        this._setStatus(true);
+        this._poll(deviceData[sequenceKey]);
       } catch (err) {
-        if (err.name === "CancelError") this.log(err);
+        if (err.name === "CancelError") this._log(err);
         else if (err.name === "RequestError" || "EvalError") {
-          this.log(err);
-          this.status = "disconnected";
-          deviceStore.setInactive(this.ipAddress);
+          this._log(err);
+          if (this.connected) deviceStore.setInactive(this.ipAddress);
+          this._setStatus(false);
+          if (Date.now() - this.connectedTime > 10 * 60000) {
+            this._resetWatchdog(5);
+            this._log("Inactive device. Retrying in 5 min.");
+          }
         }
       }
     }
 
-    evalWrapper(data) {
+    _evalWrapper(data) {
       try {
         return eval(data.replace("display(", "("));
       } catch (err) {
@@ -86,8 +48,21 @@ exports.createWatcherClass = (config, deviceStore, fetch, get) => {
       }
     }
 
-    log(message, level = "info") {
-      logger.log({ level, label: this.ipAddress, message });
+    _setStatus(newStatus) {
+      if (newStatus) this.connectedTime = Date.now();
+      if (newStatus !== this.connected) {
+        this.connected = newStatus;
+        this._log(`Device is ${newStatus ? "connected" : "disconnected"}.`);
+      }
+    }
+
+    _resetWatchdog(minutes) {
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
+        this._log(`Connection timedout (${minutes} min).`);
+        if (this.request._isPending) this.request.cancel();
+        this._poll();
+      }, minutes * 60000);
     }
   };
 };
