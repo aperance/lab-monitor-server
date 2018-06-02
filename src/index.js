@@ -51,6 +51,17 @@ engine.start();
 
 app.get("/", (req, res) => res.send("GET request to the homepage"));
 
+app.get("/stop", (req, res) => {
+  engine.stop();
+  res.send("OK");
+});
+
+app.get("/restart", (req, res) => {
+  engine.stop();
+  engine.start();
+  res.send("OK");
+});
+
 app.get("/gc", (req, res) => {
   if (global.gc) {
     global.gc();
