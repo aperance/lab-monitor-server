@@ -14,6 +14,13 @@ exports.createWatcherClass = (config, deviceStore, request, log) => {
       this._poll();
     }
 
+    kill() {
+      console.log("Killing " + this.ipAddress);
+      deviceStore.setInactive(this.ipAddress);
+      if (this.timer) clearTimeout(this.timer);
+      if (this.request._isPending) this.request.cancel();
+    }
+
     async _poll(sequence = 0) {
       if (!sequence) this._log("Starting Polling...");
       this._resetWatchdog(1);
