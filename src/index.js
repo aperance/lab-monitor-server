@@ -33,6 +33,8 @@ const psToolsHandler = require("./psToolsHandler.js").createPsToolsHandler(
   exec
 );
 
+const httpProxy = require("./httpProxy.js").createHttpProxy(http);
+
 const vncProxy = require("./vncProxy.js").createVncProxy(net);
 
 const websocket = require("./webSocket.js").createWebsocket(
