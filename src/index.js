@@ -59,8 +59,7 @@ app.get("/stop", (req, res) => {
 });
 
 app.get("/restart", (req, res) => {
-  engine.stop();
-  engine.start();
+  engine.refreshAll();
   res.send("OK");
 });
 
