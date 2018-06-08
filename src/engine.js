@@ -19,9 +19,11 @@ exports.createEngine = (Watcher, config) => ({
     this.obj[ipAddress] = new Watcher(ipAddress);
   },
 
-  refresh(ipAddress) {
-    this.obj[ipAddress].kill();
-    this.obj[ipAddress] = new Watcher(ipAddress);
+  refresh(ipAddressArray) {
+    ipAddressArray.forEach(ipAddress => {
+      this.obj[ipAddress].kill();
+      this.obj[ipAddress] = new Watcher(ipAddress);
+    });
   },
 
   refreshAll() {

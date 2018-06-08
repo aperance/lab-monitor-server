@@ -3,6 +3,7 @@ exports.createWebsocket = (
   net,
   url,
   deviceStore,
+  engine,
   actionHandler,
   psToolsHandler,
   vncProxy,
@@ -43,6 +44,12 @@ exports.createWebsocket = (
         const data = JSON.parse(message);
 
         switch (data.type) {
+          case "REFRESH_DEVICE":
+            console.log("REFRESH_DEVICE received");
+
+            engine.refresh(data.targets);
+            break;
+
           case "DEVICE_ACTION":
             console.log("DEVICE_ACTION received");
 

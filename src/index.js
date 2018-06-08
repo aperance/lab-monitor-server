@@ -42,6 +42,7 @@ const websocket = require("./webSocket.js").createWebsocket(
   net,
   url,
   deviceStore,
+  engine,
   actionHandler,
   psToolsHandler,
   vncProxy,
