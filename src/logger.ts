@@ -17,7 +17,7 @@ const logger = winston.createLogger({
   ]
 });
 
-const log = function(message) {
+const log = function(message: string) {
   logger.log({ level: "info", label: this.ipAddress, message });
 };
 

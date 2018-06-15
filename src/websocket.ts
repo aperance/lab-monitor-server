@@ -10,7 +10,7 @@ import vncProxy from "./vncProxy";
 const server = new ws.Server({ port: 4000 });
 console.log("ws listening");
 
-deviceStore.subscribe(data => {
+deviceStore.subscribe((data: any) => {
   server.clients.forEach(client => {
     if (client.readyState === ws.OPEN) {
       client.send(JSON.stringify({ type: "DEVICE_DATA_UPDATE", ...data }));
@@ -19,6 +19,7 @@ deviceStore.subscribe(data => {
 });
 
 server.on("connection", (socket, req) => {
+  if (!req.url) return;
   const { pathname, query } = url.parse(req.url, true);
   if (pathname === "/vnc") vncProxy(socket, query);
   else {

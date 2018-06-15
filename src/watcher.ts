@@ -8,7 +8,7 @@ class Watcher {
   ipAddress: string;
   url: string;
   connected: boolean;
-  connectedTime: number;
+  connectedTime: number | null;
   timer: any;
   request: any;
   log: any;
@@ -52,7 +52,10 @@ class Watcher {
         this.log(err);
         if (this.connected) deviceStore.setInactive(this.ipAddress);
         this._setStatus(false);
-        if (Date.now() - this.connectedTime > 10 * 60000) {
+        if (
+          !this.connectedTime ||
+          Date.now() - this.connectedTime > 10 * 60000
+        ) {
           this._resetWatchdog(5);
           this.log("Inactive device. Retrying in 5 min.");
         }

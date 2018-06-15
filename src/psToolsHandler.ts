@@ -1,7 +1,7 @@
 const config = require("../config.json");
 import { exec } from "child_process";
 
-const psToolsHandler = (target, mode, cmd) => {
+const psToolsHandler = (target: string, mode: string, cmd: string) => {
   const str =
     "C:\\PSTools\\" +
     (mode === "psExec" ? "psexec -d -i " : "") +

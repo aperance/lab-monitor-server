@@ -5,6 +5,7 @@ import * as http from "http";
 const proxy = http_proxy.createProxyServer({});
 const addressMap = new Map();
 const server = http.createServer((req, res) => {
+  if (!req.connection.remoteAddress || !req.url) return;
   const source = req.connection.remoteAddress.replace("::ffff:", "");
   let destination = querystring.parse(req.url.replace("/?", "")).target;
 
