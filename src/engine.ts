@@ -1,4 +1,7 @@
-const createEngine = (Watcher, config, deviceStore, got, logger) => ({
+const config = require("../config.json");
+import Watcher from "./watcher";
+
+const engine = {
   //map: new Map(),
   obj: {},
 
@@ -16,20 +19,14 @@ const createEngine = (Watcher, config, deviceStore, got, logger) => ({
     this.obj = {};
   },
 
-  add(ipAddress) {
-    this.obj[ipAddress] = new Watcher(
-      ipAddress,
-      config.polling,
-      deviceStore,
-      got,
-      logger
-    );
+  add(ipAddress: string) {
+    this.obj[ipAddress] = this.createWatcher(ipAddress);
   },
 
-  refresh(ipAddressArray) {
+  refresh(ipAddressArray: string[]) {
     ipAddressArray.forEach(ipAddress => {
       this.obj[ipAddress].kill();
-      this.obj[ipAddress] = new Watcher(ipAddress);
+      this.obj[ipAddress] = this.createWatcher(ipAddress);
     });
   },
 
@@ -37,9 +34,13 @@ const createEngine = (Watcher, config, deviceStore, got, logger) => ({
     Object.entries(this.obj).map(([ipAddress, watcher]) => {
       // @ts-ignoreS
       watcher.kill();
-      this.obj[ipAddress] = new Watcher(ipAddress);
+      this.obj[ipAddress] = this.createWatcher(ipAddress);
     });
-  }
-});
+  },
 
-export { createEngine };
+  createWatcher(ipAddress: string) {
+    return new Watcher(ipAddress);
+  }
+};
+
+export default engine;

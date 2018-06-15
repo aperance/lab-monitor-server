@@ -11,6 +11,8 @@
 // 3. For both state and history, the changes between new and previous are sent to the subscriber.
 //
 
+const config = require("../config.json");
+
 class DeviceStore {
   _deviceData: any;
   _get: any;
@@ -18,9 +20,10 @@ class DeviceStore {
   _maxSize: number;
   _subscriber: any;
 
-  constructor(config) {
+  constructor() {
     this._deviceData = new Map();
-    this._get = id => this._deviceData.get(id) || { state: {}, history: {} };
+    this._get = (id: string) =>
+      this._deviceData.get(id) || { state: {}, history: {} };
     this._timestamp = () =>
       new Date().toLocaleString("en-US", config.dateFormat).replace(/,/g, "");
     this._maxSize = config.history.maxSize;
@@ -28,7 +31,7 @@ class DeviceStore {
   }
 
   // Sets observer function to be called when Map is updated.
-  subscribe(func) {
+  subscribe(func: any) {
     this._subscriber = func;
   }
 
@@ -48,7 +51,7 @@ class DeviceStore {
   // Updates Map with newly updated state data for given id, and compares new and
   // previous state data, saving a history of changes in the Map for given id as well.
   // Changes to state and history are emitted via _callbackOnUpdate function.
-  set(id, newState) {
+  set(id: string, newState: any) {
     if (typeof id != "string" || typeof newState != "object") {
       throw new TypeError("Invalid Input");
     }
@@ -62,7 +65,7 @@ class DeviceStore {
     );
 
     // Generate modified state object by adding latest values to modified keys list.
-    const modifiedState = modifiedKeys.reduce((acc, key) => {
+    const modifiedState = modifiedKeys.reduce((acc: any, key: string) => {
       acc[key] = newState[key] || null;
       return acc;
     }, {});
@@ -100,10 +103,7 @@ class DeviceStore {
       });
   }
 
-  setInactive(id) {
-    if (typeof id != "string") {
-      throw new TypeError("Invalid Input");
-    }
+  setInactive(id: string) {
     const { state, history } = this._get(id);
     if (state.active === true) {
       this._deviceData.set(id, { state: { ...state, active: false }, history });
@@ -113,4 +113,4 @@ class DeviceStore {
   }
 }
 
-exports.createDeviceStore = config => new DeviceStore(config);
+export default new DeviceStore();

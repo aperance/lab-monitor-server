@@ -1,56 +1,14 @@
-const app = require("express")();
-const http = require("http");
-const ws = require("ws");
-const net = require("net");
-const url = require("url");
-const fetch = require("node-fetch");
-const winston = require("winston");
-const { exec } = require("child_process");
-const { promisify } = require("util");
+import * as express from "express";
+import * as http from "http";
 
-const logger = require("./logger.js").createLoggers(winston);
-const got = require("got");
+import "./deviceStore";
+import engine from "./engine";
+import "./websocket";
+import "./httpProxy";
 
-const config = require("../config.json");
-
-const deviceStore = require("./deviceStore.js").createDeviceStore(config);
-
-import { Watcher } from "./watcher";
-
-//const Watcher = createWatcherClass(config, deviceStore, got, logger);
-
-import { createEngine } from "./engine";
-
-const engine = createEngine(Watcher, config, deviceStore, got, logger);
-
-const actionHandler = require("./actionHandler.js").createActionHandler(
-  config,
-  fetch
-);
-
-const psToolsHandler = require("./psToolsHandler.js").createPsToolsHandler(
-  config,
-  exec
-);
-
-const httpProxy = require("./httpProxy.js").createHttpProxy(http);
-
-const vncProxy = require("./vncProxy.js").createVncProxy(net);
-
-const websocket = require("./webSocket.js").createWebsocket(
-  ws,
-  net,
-  url,
-  deviceStore,
-  engine,
-  actionHandler,
-  psToolsHandler,
-  vncProxy,
-  config
-);
-
-//watchList.startScanning(poll);
 engine.start();
+
+const app = express();
 
 app.get("/", (req, res) => res.send("GET request to the homepage"));
 
@@ -74,7 +32,7 @@ app.get("/gc", (req, res) => {
 const server = http.createServer(app);
 server.listen(8080);
 
-/* Load Demo Store Data */
-const testData = require("../testData.json");
-if (config.loadTestData)
-  deviceStore._deviceData = new Map(Object.entries(testData));
+// /* Load Demo Store Data */
+// const testData = require("../testData.json");
+// if (config.loadTestData)
+//   deviceStore._deviceData = new Map(Object.entries(testData));

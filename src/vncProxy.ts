@@ -1,4 +1,6 @@
-exports.createVncProxy = net => (socket, query) => {
+import * as net from "net";
+
+const createVncProxy = (socket, query) => {
   console.log("vnc ws received");
 
   const tcp = net.createConnection(query.port, query.ip, () => {
@@ -37,3 +39,5 @@ exports.createVncProxy = net => (socket, query) => {
     tcp.end();
   });
 };
+
+export default createVncProxy;
