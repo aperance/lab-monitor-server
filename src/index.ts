@@ -14,14 +14,14 @@ const got = require("got");
 const config = require("../config.json");
 
 const deviceStore = require("./deviceStore.js").createDeviceStore(config);
-const Watcher = require("./watcher.js").createWatcherClass(
-  config,
-  deviceStore,
-  got,
-  logger
-);
 
-const engine = require("./engine.js").createEngine(Watcher, config);
+import { Watcher } from "./watcher";
+
+//const Watcher = createWatcherClass(config, deviceStore, got, logger);
+
+import { createEngine } from "./engine";
+
+const engine = createEngine(Watcher, config, deviceStore, got, logger);
 
 const actionHandler = require("./actionHandler.js").createActionHandler(
   config,

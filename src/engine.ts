@@ -1,4 +1,4 @@
-exports.createEngine = (Watcher, config) => ({
+const createEngine = (Watcher, config, deviceStore, got, logger) => ({
   //map: new Map(),
   obj: {},
 
@@ -17,7 +17,13 @@ exports.createEngine = (Watcher, config) => ({
   },
 
   add(ipAddress) {
-    this.obj[ipAddress] = new Watcher(ipAddress);
+    this.obj[ipAddress] = new Watcher(
+      ipAddress,
+      config.polling,
+      deviceStore,
+      got,
+      logger
+    );
   },
 
   refresh(ipAddressArray) {
@@ -35,3 +41,5 @@ exports.createEngine = (Watcher, config) => ({
     });
   }
 });
+
+export { createEngine };
