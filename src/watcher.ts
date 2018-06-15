@@ -2,6 +2,14 @@ exports.createWatcherClass = (config, deviceStore, request, log) => {
   const { port, path, sequenceKey } = config.polling;
 
   return class Watcher {
+    ipAddress: string;
+    url: string;
+    connected: boolean;
+    connectedTime: number;
+    timer: any;
+    request: any;
+    _log: any;
+
     constructor(ipAddress) {
       this.ipAddress = ipAddress;
       this.url = `http://${ipAddress}:${port}/${path}?${sequenceKey}=`;

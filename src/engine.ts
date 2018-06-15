@@ -11,6 +11,7 @@ exports.createEngine = (Watcher, config) => ({
   },
 
   stop() {
+    // @ts-ignore
     Object.values(this.obj).map(watcher => watcher.kill());
     this.obj = {};
   },
@@ -28,6 +29,7 @@ exports.createEngine = (Watcher, config) => ({
 
   refreshAll() {
     Object.entries(this.obj).map(([ipAddress, watcher]) => {
+      // @ts-ignoreS
       watcher.kill();
       this.obj[ipAddress] = new Watcher(ipAddress);
     });

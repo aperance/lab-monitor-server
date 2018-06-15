@@ -1,8 +1,8 @@
-const httpProxy = require("http-proxy");
+const http_proxy = require("http-proxy");
 const querystring = require("querystring");
 
 exports.createHttpProxy = http => {
-  const proxy = httpProxy.createProxyServer({});
+  const proxy = http_proxy.createProxyServer({});
   const addressMap = new Map();
   const server = http.createServer((req, res) => {
     const source = req.connection.remoteAddress.replace("::ffff:", "");

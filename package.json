@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon src/index.js",
+    "start": "tsc && node build/index.js",
     "test": "jest"
   },
   "author": "William Aperance",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^10.3.3",
     "express": "^4.16.3",
     "express-graphql": "^0.6.12",
     "got": "^8.3.1",

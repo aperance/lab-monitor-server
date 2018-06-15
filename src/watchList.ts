@@ -7,6 +7,11 @@
 //
 
 class WatchList {
+  _map: any;
+  _poll: any;
+  _timeout: number;
+  _checkInterval: number;
+
   constructor(config) {
     // Create Map to store list of assets to monitor,
     // with key = IP address and value = time of last poll.
@@ -43,7 +48,7 @@ class WatchList {
     return Array.from(this._map)
       .filter(([, timestamp]) => timestamp < Date.now() - this._timeout)
       .forEach(([ipAddress]) => {
-        console.log("Initializing polling cycle for " + ipAddress)
+        console.log("Initializing polling cycle for " + ipAddress);
         this._poll(ipAddress);
       });
   }

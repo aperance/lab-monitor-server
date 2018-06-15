@@ -12,6 +12,12 @@
 //
 
 class DeviceStore {
+  _deviceData: any;
+  _get: any;
+  _timestamp: any;
+  _maxSize: number;
+  _subscriber: any;
+
   constructor(config) {
     this._deviceData = new Map();
     this._get = id => this._deviceData.get(id) || { state: {}, history: {} };
@@ -30,7 +36,7 @@ class DeviceStore {
   // state and single history object, reducing work for client.
   getAll() {
     return Array.from(this._deviceData).reduce(
-      (acc, [key, { state, history }]) => {
+      (acc: any, [key, { state, history }]) => {
         acc.state[key] = state;
         acc.history[key] = history;
         return acc;
@@ -70,7 +76,7 @@ class DeviceStore {
     // Generate updated history object by merging modified history records into
     // previous history object, popping oldest records if max size setting exceeded.
     const newHistory = modifiedHistory.reduce(
-      (acc, [key, newRecord]) => {
+      (acc, [key, newRecord]: string[]) => {
         if (!acc[key]) acc[key] = [];
         acc[key] = [newRecord, ...acc[key]];
         while (acc[key].length > this._maxSize) acc[key].pop();
@@ -101,10 +107,10 @@ class DeviceStore {
     const { state, history } = this._get(id);
     if (state.active === true) {
       this._deviceData.set(id, { state: { ...state, active: false }, history });
-      if (this._subscriber) this._subscriber({ id, state: { active: false }, history: [] });
+      if (this._subscriber)
+        this._subscriber({ id, state: { active: false }, history: [] });
     }
   }
-
 }
 
 exports.createDeviceStore = config => new DeviceStore(config);
