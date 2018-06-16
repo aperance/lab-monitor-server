@@ -11,6 +11,9 @@
 // 3. For both state and history, the changes between new and previous are sent to the subscriber.
 //
 
+import { broadcast } from "./websocket";
+import { isPrimitive } from "util";
+
 const {
   maxHistory,
   dateFormat
@@ -19,7 +22,7 @@ const {
   dateFormat: { [key: string]: string };
 } = require("../config.json").deviceStore;
 
-interface State {
+export interface State {
   [key: string]: string;
 }
 
@@ -47,27 +50,20 @@ interface AccumulatedRecords {
 
 class DeviceStore {
   private deviceData: Map<string, DeviceRecord>;
-  _subscriber: any;
 
   constructor() {
     this.deviceData = new Map();
-    this._subscriber = null;
   }
 
-  private get timestamp() {
+  private get timestamp(): string {
     return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
   }
 
-  // Sets observer function to be called when Map is updated.
-  public subscribe(func: any) {
-    this._subscriber = func;
-  }
-
-  private setToMap(id: string, newDeviceRecord: DeviceRecord) {
+  private setToMap(id: string, newDeviceRecord: DeviceRecord): void {
     this.deviceData.set(id, newDeviceRecord);
   }
 
-  private getOneFromMap(id: string): DeviceRecord {
+  private getFromMap(id: string): DeviceRecord {
     return this.deviceData.get(id) || { state: {}, history: {} };
   }
 
@@ -88,9 +84,9 @@ class DeviceStore {
   // Updates Map with newly updated state data for given id, and compares new and
   // previous state data, saving a history of changes in the Map for given id as well.
   // Changes to state and history are emitted via _callbackOnUpdate function.
-  public set(id: string, newState: State) {
+  public set(id: string, newState: State): void {
     // Grab previous state and history from Map for given id.
-    const prev: DeviceRecord = this.getOneFromMap(id);
+    const prev: DeviceRecord = this.getFromMap(id);
     const { state: prevState, history: prevHistory } = prev;
 
     // Generate list of properties that have changed between the previous and new state data.
@@ -135,23 +131,25 @@ class DeviceStore {
     });
 
     // Emit modified state and modified history via callback.
-    if (this._subscriber)
-      this._subscriber({
-        id,
-        state: { ...modifiedState, timestamp: this.timestamp, active: "true" },
-        history: modifiedHistory
-      });
+    broadcast("DEVICE_DATA_UPDATE", {
+      id,
+      state: { ...modifiedState, timestamp: this.timestamp, active: "true" },
+      history: modifiedHistory
+    });
   }
 
-  public setInactive(id: string) {
-    const { state, history } = this.getOneFromMap(id);
+  public setInactive(id: string): void {
+    const { state, history } = this.getFromMap(id);
     if (state.active === "true") {
       this.deviceData.set(id, {
         state: { ...state, active: "false" },
         history
       });
-      if (this._subscriber)
-        this._subscriber({ id, state: { active: "false" }, history: [] });
+      broadcast("DEVICE_DATA_UPDATE", {
+        id,
+        state: { active: "false" },
+        history: []
+      });
     }
   }
 }
