@@ -1,6 +1,6 @@
 import * as got from "got";
 import log from "./logger";
-import deviceStore from "./deviceStore";
+import deviceStore, { State } from "./deviceStore";
 
 const {
   port,
@@ -16,7 +16,6 @@ const {
 
 class Watcher {
   ipAddress: string;
-  url: string;
   connected: boolean;
   connectedTime: number | null;
   timer: NodeJS.Timer | null;
@@ -25,7 +24,6 @@ class Watcher {
 
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
-    this.url = `http://${ipAddress}:${port}/${path}?${sequenceKey}=`;
     this.connected = false;
     this.connectedTime = null;
     this.timer = null;
@@ -35,22 +33,25 @@ class Watcher {
     this.poll();
   }
 
-  public kill() {
+  public kill(): void {
     console.log("Killing " + this.ipAddress);
     deviceStore.setInactive(this.ipAddress);
     if (this.timer) clearTimeout(this.timer);
     if (this.request) this.request.cancel();
   }
 
-  private async poll(sequence = 0) {
-    if (!sequence) this.log("Starting Polling...");
+  private async poll(sequence: string = "0"): Promise<void> {
+    if (sequence === "0") this.log("Starting Polling...");
     this.resetWatchdog(1);
     // Fetch state data from device, using url and timeout value from config.
-    this.request = got(this.url + sequence, { retries: 0 });
+    this.request = got(
+      `http://${this.ipAddress}:${port}/${path}?${sequenceKey}=${sequence}`,
+      { retries: 0 }
+    );
 
     try {
-      const res = await this.request;
-      const deviceData = this.evalWrapper(res.body);
+      const response = await this.request;
+      const deviceData = this.evalWrapper(response.body);
       deviceStore.set(this.ipAddress, deviceData);
       this.setStatus(true);
       this.poll(deviceData[sequenceKey]);
@@ -71,7 +72,7 @@ class Watcher {
     }
   }
 
-  private evalWrapper(data: string) {
+  private evalWrapper(data: string): State {
     try {
       return eval(data.replace("display(", "("));
     } catch (err) {
@@ -79,7 +80,7 @@ class Watcher {
     }
   }
 
-  private setStatus(newStatus: boolean) {
+  private setStatus(newStatus: boolean): void {
     if (newStatus) this.connectedTime = Date.now();
     if (newStatus !== this.connected) {
       this.connected = newStatus;
@@ -87,7 +88,7 @@ class Watcher {
     }
   }
 
-  private resetWatchdog(minutes: number) {
+  private resetWatchdog(minutes: number): void {
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       this.log(`Connection timedout (${minutes} min).`);
