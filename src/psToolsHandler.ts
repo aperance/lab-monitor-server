@@ -1,5 +1,9 @@
-const config = require("../config.json");
 import { exec } from "child_process";
+
+const {
+  user,
+  password
+}: { user: string; password: string } = require("../config.json").psTools;
 
 const psToolsHandler = (target: string, mode: string, cmd: string) => {
   const str =
@@ -9,9 +13,9 @@ const psToolsHandler = (target: string, mode: string, cmd: string) => {
     "\\\\" +
     target +
     " -u \\" +
-    config.psTools.user +
+    user +
     " -p " +
-    config.psTools.password +
+    password +
     " " +
     cmd;
 

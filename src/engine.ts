@@ -1,12 +1,24 @@
-const config = require("../config.json");
 import Watcher from "./watcher";
 
+const {
+  addressRanges
+}: {
+  addressRanges: {
+    subnet: string;
+    start: number;
+    end: number;
+  }[];
+} = require("../config.json").engine;
+
+interface WatcherList {
+  [key: string]: Watcher;
+}
+
 const engine = {
-  //map: new Map(),
-  obj: {},
+  watcherList: <WatcherList>{},
 
   start() {
-    config.watchList.range.forEach(({ subnet, start, end }) => {
+    addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         this.add(subnet.slice(0, -1) + i);
       }
@@ -14,27 +26,25 @@ const engine = {
   },
 
   stop() {
-    // @ts-ignore
-    Object.values(this.obj).map(watcher => watcher.kill());
-    this.obj = {};
+    Object.values(this.watcherList).map(watcher => watcher.kill());
+    this.watcherList = {};
   },
 
   add(ipAddress: string) {
-    this.obj[ipAddress] = this.createWatcher(ipAddress);
+    this.watcherList[ipAddress] = this.createWatcher(ipAddress);
   },
 
   refresh(ipAddressArray: string[]) {
     ipAddressArray.forEach(ipAddress => {
-      this.obj[ipAddress].kill();
-      this.obj[ipAddress] = this.createWatcher(ipAddress);
+      this.watcherList[ipAddress].kill();
+      this.watcherList[ipAddress] = this.createWatcher(ipAddress);
     });
   },
 
   refreshAll() {
-    Object.entries(this.obj).map(([ipAddress, watcher]) => {
-      // @ts-ignoreS
+    Object.entries(this.watcherList).map(([ipAddress, watcher]) => {
       watcher.kill();
-      this.obj[ipAddress] = this.createWatcher(ipAddress);
+      this.watcherList[ipAddress] = this.createWatcher(ipAddress);
     });
   },
 

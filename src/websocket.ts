@@ -35,7 +35,7 @@ server.on("connection", (socket, req) => {
     socket.send(
       JSON.stringify({
         type: "DEVICE_DATA_ALL",
-        ...deviceStore.getAll()
+        ...deviceStore.getAccumulatedRecords()
       })
     );
 

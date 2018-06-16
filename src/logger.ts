@@ -18,6 +18,7 @@ const logger = winston.createLogger({
 });
 
 const log = function(message: string) {
+  // @ts-ignore
   logger.log({ level: "info", label: this.ipAddress, message });
 };
 

@@ -11,38 +11,75 @@
 // 3. For both state and history, the changes between new and previous are sent to the subscriber.
 //
 
-const config = require("../config.json");
+const {
+  maxHistory,
+  dateFormat
+}: {
+  maxHistory: number;
+  dateFormat: { [key: string]: string };
+} = require("../config.json").deviceStore;
+
+interface State {
+  [key: string]: string;
+}
+
+interface ModifiedState {
+  [key: string]: string | null;
+}
+
+interface History {
+  [key: string]: [string, string | null][];
+}
+
+interface DeviceRecord {
+  state: State;
+  history: History;
+}
+
+interface AccumulatedRecords {
+  state: {
+    [key: string]: State;
+  };
+  history: {
+    [key: string]: History;
+  };
+}
 
 class DeviceStore {
-  _deviceData: any;
-  _get: any;
-  _timestamp: any;
-  _maxSize: number;
+  private deviceData: Map<string, DeviceRecord>;
   _subscriber: any;
 
   constructor() {
-    this._deviceData = new Map();
-    this._get = (id: string) =>
-      this._deviceData.get(id) || { state: {}, history: {} };
-    this._timestamp = () =>
-      new Date().toLocaleString("en-US", config.dateFormat).replace(/,/g, "");
-    this._maxSize = config.history.maxSize;
+    this.deviceData = new Map();
     this._subscriber = null;
   }
 
+  private get timestamp() {
+    return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
+  }
+
   // Sets observer function to be called when Map is updated.
-  subscribe(func: any) {
+  public subscribe(func: any) {
     this._subscriber = func;
+  }
+
+  private setToMap(id: string, newDeviceRecord: DeviceRecord) {
+    this.deviceData.set(id, newDeviceRecord);
+  }
+
+  private getOneFromMap(id: string): DeviceRecord {
+    return this.deviceData.get(id) || { state: {}, history: {} };
   }
 
   // Returns all data from Map. All data is sorted into a single
   // state and single history object, reducing work for client.
-  getAll() {
-    return Array.from(this._deviceData).reduce(
-      (acc: any, [key, { state, history }]) => {
-        acc.state[key] = state;
-        acc.history[key] = history;
-        return acc;
+  public getAccumulatedRecords(): AccumulatedRecords {
+    const recordArray: [string, DeviceRecord][] = Array.from(this.deviceData);
+    return recordArray.reduce(
+      (accumulatedRecords: AccumulatedRecords, [id, deviceRecord]) => {
+        accumulatedRecords.state[id] = deviceRecord.state;
+        accumulatedRecords.history[id] = deviceRecord.history;
+        return accumulatedRecords;
       },
       { state: {}, history: {} }
     );
@@ -51,13 +88,10 @@ class DeviceStore {
   // Updates Map with newly updated state data for given id, and compares new and
   // previous state data, saving a history of changes in the Map for given id as well.
   // Changes to state and history are emitted via _callbackOnUpdate function.
-  set(id: string, newState: any) {
-    if (typeof id != "string" || typeof newState != "object") {
-      throw new TypeError("Invalid Input");
-    }
-
+  public set(id: string, newState: State) {
     // Grab previous state and history from Map for given id.
-    const { state: prevState, history: prevHistory } = this._get(id);
+    const prev: DeviceRecord = this.getOneFromMap(id);
+    const { state: prevState, history: prevHistory } = prev;
 
     // Generate list of properties that have changed between the previous and new state data.
     const modifiedKeys = Object.keys({ ...prevState, ...newState }).filter(
@@ -65,32 +99,38 @@ class DeviceStore {
     );
 
     // Generate modified state object by adding latest values to modified keys list.
-    const modifiedState = modifiedKeys.reduce((acc: any, key: string) => {
-      acc[key] = newState[key] || null;
-      return acc;
-    }, {});
+    const modifiedState: ModifiedState = modifiedKeys.reduce(
+      (state: ModifiedState, propertyKey) => {
+        state[propertyKey] = newState[propertyKey] || null;
+        return state;
+      },
+      {}
+    );
 
     // Generate modified history array by adding latest values and timestamps to modified keys list.
-    const modifiedHistory = modifiedKeys.map(key => [
-      key,
-      [this._timestamp(), newState[key] || null]
-    ]);
+    const modifiedHistory = modifiedKeys.map(propertyKey => {
+      let returnValue: [string, [string, string | null]];
+      const propertyValue = newState[propertyKey] || null;
+      returnValue = [propertyKey, [this.timestamp, propertyValue]];
+      return returnValue;
+    });
 
     // Generate updated history object by merging modified history records into
     // previous history object, popping oldest records if max size setting exceeded.
-    const newHistory = modifiedHistory.reduce(
-      (acc, [key, newRecord]: string[]) => {
-        if (!acc[key]) acc[key] = [];
-        acc[key] = [newRecord, ...acc[key]];
-        while (acc[key].length > this._maxSize) acc[key].pop();
-        return acc;
+    const newHistory: History = modifiedHistory.reduce(
+      (history: History, [propertyKey, newRecord]) => {
+        if (!history[propertyKey]) history[propertyKey] = [];
+        history[propertyKey] = [newRecord, ...history[propertyKey]];
+        while (history[propertyKey].length > maxHistory)
+          history[propertyKey].pop();
+        return history;
       },
       { ...prevHistory }
     );
 
     // Save latest state and updated history objects to Map.
-    this._deviceData.set(id, {
-      state: { ...newState, timestamp: this._timestamp(), active: true },
+    this.setToMap(id, {
+      state: { ...newState, timestamp: this.timestamp, active: "true" },
       history: newHistory
     });
 
@@ -98,17 +138,20 @@ class DeviceStore {
     if (this._subscriber)
       this._subscriber({
         id,
-        state: { ...modifiedState, timestamp: this._timestamp(), active: true },
+        state: { ...modifiedState, timestamp: this.timestamp, active: "true" },
         history: modifiedHistory
       });
   }
 
-  setInactive(id: string) {
-    const { state, history } = this._get(id);
-    if (state.active === true) {
-      this._deviceData.set(id, { state: { ...state, active: false }, history });
+  public setInactive(id: string) {
+    const { state, history } = this.getOneFromMap(id);
+    if (state.active === "true") {
+      this.deviceData.set(id, {
+        state: { ...state, active: "false" },
+        history
+      });
       if (this._subscriber)
-        this._subscriber({ id, state: { active: false }, history: [] });
+        this._subscriber({ id, state: { active: "false" }, history: [] });
     }
   }
 }

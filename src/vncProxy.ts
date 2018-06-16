@@ -1,6 +1,6 @@
 import * as net from "net";
 
-const createVncProxy = (socket, query) => {
+const createVncProxy = (socket: any, query: any) => {
   console.log("vnc ws received");
 
   const tcp = net.createConnection(query.port, query.ip, () => {
@@ -27,14 +27,14 @@ const createVncProxy = (socket, query) => {
     socket.close();
   });
 
-  socket.on("message", msg => tcp.write(msg));
+  socket.on("message", (msg: any) => tcp.write(msg));
 
-  socket.on("close", (code, reason) => {
+  socket.on("close", (code: any, reason: string) => {
     console.log("WebSocket client disconnected: " + code + " [" + reason + "]");
     tcp.end();
   });
 
-  socket.on("error", e => {
+  socket.on("error", (e: any) => {
     console.log("WebSocket client error: " + e);
     tcp.end();
   });
