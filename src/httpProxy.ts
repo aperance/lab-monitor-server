@@ -1,16 +1,17 @@
-const http_proxy = require("http-proxy");
-const querystring = require("querystring");
 import * as http from "http";
+import * as httpProxy from "http-proxy";
+import * as querystring from "querystring";
 
-const proxy = http_proxy.createProxyServer({});
-const addressMap = new Map();
+const proxy = httpProxy.createProxyServer({});
+const addressMap: Map<string, string> = new Map();
+
 const server = http.createServer((req, res) => {
   if (!req.connection.remoteAddress || !req.url) return;
   const source = req.connection.remoteAddress.replace("::ffff:", "");
   let destination = querystring.parse(req.url.replace("/?", "")).target;
 
-  if (destination) addressMap.set(source, destination);
-  else destination = addressMap.get(source);
+  if (typeof destination !== "string") destination = addressMap.get(source);
+  else addressMap.set(source, destination);
 
   if (destination)
     proxy.web(req, res, { target: `http://${destination}:8001` });
@@ -20,5 +21,6 @@ const server = http.createServer((req, res) => {
     res.end();
   }
 });
-console.log("HTTP Proxy listening on port 9000");
+
 server.listen(9000);
+console.log("HTTP Proxy listening on port 9000");

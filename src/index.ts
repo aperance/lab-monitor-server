@@ -1,12 +1,13 @@
-import * as express from "express";
-import * as http from "http";
-
-import "./deviceStore";
 import engine from "./engine";
 import "./websocket";
 import "./httpProxy";
+import "./vncProxy";
 
 engine.start();
+
+/*** Express ***/
+import * as express from "express";
+import * as http from "http";
 
 const app = express();
 

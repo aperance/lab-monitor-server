@@ -20,7 +20,7 @@ class Watcher {
   connectedTime: number | null;
   timer: NodeJS.Timer | null;
   request: got.GotPromise<string> | null;
-  log: any;
+  log: (message: string) => void;
 
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
@@ -28,7 +28,7 @@ class Watcher {
     this.connectedTime = null;
     this.timer = null;
     this.request = null;
-    this.log = log.bind(this);
+    this.log = message => log(ipAddress, message);
 
     this.poll();
   }
