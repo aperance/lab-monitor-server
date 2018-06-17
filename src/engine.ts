@@ -3,11 +3,11 @@ import Watcher from "./watcher";
 const {
   addressRanges
 }: {
-  addressRanges: {
+  addressRanges: Array<{
     subnet: string;
     start: number;
     end: number;
-  }[];
+  }>;
 } = require("../config.json").engine;
 
 interface WatcherList {
@@ -15,7 +15,7 @@ interface WatcherList {
 }
 
 const engine = {
-  watcherList: <WatcherList>{},
+  watcherList: {} as WatcherList,
 
   start() {
     addressRanges.forEach(({ subnet, start, end }) => {

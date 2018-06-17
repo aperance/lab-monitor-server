@@ -12,7 +12,6 @@
 //
 
 import { broadcast } from "./websocket";
-import { isPrimitive } from "util";
 
 const {
   maxHistory,
@@ -31,7 +30,7 @@ interface ModifiedState {
 }
 
 interface History {
-  [key: string]: [string, string | null][];
+  [key: string]: Array<[string, string | null]>;
 }
 
 interface DeviceRecord {
@@ -55,22 +54,12 @@ class DeviceStore {
     this.deviceData = new Map();
   }
 
-  private get timestamp(): string {
-    return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
-  }
-
-  private setToMap(id: string, newDeviceRecord: DeviceRecord): void {
-    this.deviceData.set(id, newDeviceRecord);
-  }
-
-  private getFromMap(id: string): DeviceRecord {
-    return this.deviceData.get(id) || { state: {}, history: {} };
-  }
-
   // Returns all data from Map. All data is sorted into a single
   // state and single history object, reducing work for client.
   public getAccumulatedRecords(): AccumulatedRecords {
-    const recordArray: [string, DeviceRecord][] = Array.from(this.deviceData);
+    const recordArray: Array<[string, DeviceRecord]> = Array.from(
+      this.deviceData
+    );
     return recordArray.reduce(
       (accumulatedRecords: AccumulatedRecords, [id, deviceRecord]) => {
         accumulatedRecords.state[id] = deviceRecord.state;
@@ -91,7 +80,7 @@ class DeviceStore {
 
     // Generate list of properties that have changed between the previous and new state data.
     const modifiedKeys = Object.keys({ ...prevState, ...newState }).filter(
-      key => prevState[key] != newState[key]
+      key => prevState[key] !== newState[key]
     );
 
     // Generate modified state object by adding latest values to modified keys list.
@@ -151,6 +140,18 @@ class DeviceStore {
         history: []
       });
     }
+  }
+
+  private get timestamp(): string {
+    return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
+  }
+
+  private setToMap(id: string, newDeviceRecord: DeviceRecord): void {
+    this.deviceData.set(id, newDeviceRecord);
+  }
+
+  private getFromMap(id: string): DeviceRecord {
+    return this.deviceData.get(id) || { state: {}, history: {} };
   }
 }
 

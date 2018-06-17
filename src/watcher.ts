@@ -1,6 +1,6 @@
 import * as got from "got";
-import log from "./logger";
 import deviceStore, { State } from "./deviceStore";
+import log from "./logger";
 
 const {
   port,
@@ -15,12 +15,12 @@ const {
 } = require("../config.json").watcher;
 
 class Watcher {
-  ipAddress: string;
-  connected: boolean;
-  connectedTime: number | null;
-  timer: NodeJS.Timer | null;
-  request: got.GotPromise<string> | null;
-  log: (message: string) => void;
+  private ipAddress: string;
+  private connected: boolean;
+  private connectedTime: number | null;
+  private timer: NodeJS.Timer | null;
+  private request: got.GotPromise<string> | null;
+  private log: (message: string) => void;
 
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;

@@ -1,7 +1,7 @@
 import engine from "./engine";
-import "./websocket";
 import "./httpProxy";
 import "./vncProxy";
+import "./websocket";
 
 engine.start();
 

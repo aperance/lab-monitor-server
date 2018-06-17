@@ -17,7 +17,7 @@ const logger = winston.createLogger({
   ]
 });
 
-const log = function(label: string, message: string) {
+const log = (label: string, message: string) => {
   logger.log({ level: "info", label, message });
 };
 

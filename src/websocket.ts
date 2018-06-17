@@ -1,7 +1,7 @@
 import * as ws from "ws";
+import actionHandler from "./actionHandler";
 import deviceStore from "./deviceStore";
 import engine from "./engine";
-import actionHandler from "./actionHandler";
 import psToolsHandler from "./psToolsHandler";
 
 const server = new ws.Server({ port: 4000 });
