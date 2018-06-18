@@ -13,8 +13,7 @@ server.on("connection", (socket, req) => {
   sendToSocket(socket, "DEVICE_DATA_ALL", deviceStore.getAccumulatedRecords());
 
   socket.on("message", function incoming(message) {
-    // @ts-ignore
-    const data = JSON.parse(message);
+    const data: { [x: string]: any } = JSON.parse(message as string);
     console.log(data.type + " received");
 
     switch (data.type) {
