@@ -1,4 +1,4 @@
-import actionHandler from "../actionHandler";
+const actionHandler = require("../actionHandler.js").default;
 
 jest.mock(
   "../../config.json",

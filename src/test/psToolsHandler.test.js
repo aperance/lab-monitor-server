@@ -1,4 +1,4 @@
-import psToolsHandler from "../psToolsHandler";
+const psToolsHandler = require("../psToolsHandler.js").default;
 
 jest.mock(
   "../../config.json",
@@ -15,12 +15,7 @@ jest.mock("child_process");
 const exec = require("child_process").exec;
 
 test("without error", async () => {
-  exec.mockImplementation(
-    (
-      str: string,
-      cb: (err: Error | null, stdout: string, stderr: string) => void
-    ) => cb(null, "(stdout)", "(stderr)")
-  );
+  exec.mockImplementation((str, cb) => cb(null, "(stdout)", "(stderr)"));
   expect.assertions(1);
   const result = await psToolsHandler("127.0.0.1", "psExec", "(testString)");
   expect(result).toEqual(
