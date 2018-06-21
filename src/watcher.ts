@@ -1,6 +1,6 @@
 import * as got from "got";
 import deviceStore, { State } from "./deviceStore";
-import log from "./logger";
+import { watcher as log } from "./logger";
 
 const {
   port,
@@ -20,7 +20,6 @@ class Watcher {
   private connectedTime: number | null;
   private timer: NodeJS.Timer | null;
   private request: got.GotPromise<string> | null;
-  private log: (message: string) => void;
 
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
@@ -28,20 +27,18 @@ class Watcher {
     this.connectedTime = null;
     this.timer = null;
     this.request = null;
-    this.log = message => log(ipAddress, message);
-
     this.poll();
   }
 
   public kill(): void {
-    console.log("Killing " + this.ipAddress);
+    log.info("Killing " + this.ipAddress);
     deviceStore.setInactive(this.ipAddress);
     if (this.timer) clearTimeout(this.timer);
     if (this.request) this.request.cancel();
   }
 
   private async poll(sequence: string = "0"): Promise<void> {
-    if (sequence === "0") this.log("Starting Polling...");
+    if (sequence === "0") log.info(`${this.ipAddress}: Starting Polling...`);
     this.resetWatchdog(1);
     // Fetch state data from device, using url and timeout value from config.
     this.request = got(
@@ -56,9 +53,9 @@ class Watcher {
       this.setStatus(true);
       this.poll(deviceData[sequenceKey]);
     } catch (err) {
-      if (err.name === "CancelError") this.log(err);
+      if (err.name === "CancelError") log.info(`${this.ipAddress}: ${err}`);
       else if (err.name === "RequestError" || "EvalError") {
-        this.log(err);
+        log.info(`${this.ipAddress}: ${err}`);
         if (this.connected) deviceStore.setInactive(this.ipAddress);
         this.setStatus(false);
         if (
@@ -66,7 +63,7 @@ class Watcher {
           Date.now() - this.connectedTime > 10 * 60000
         ) {
           this.resetWatchdog(5);
-          this.log("Inactive device. Retrying in 5 min.");
+          log.info(`${this.ipAddress}: Inactive device. Retrying in 5 min.`);
         }
       }
     }
@@ -84,14 +81,18 @@ class Watcher {
     if (newStatus) this.connectedTime = Date.now();
     if (newStatus !== this.connected) {
       this.connected = newStatus;
-      this.log(`Device is ${newStatus ? "connected" : "disconnected"}.`);
+      log.info(
+        `${this.ipAddress}: Device is ${
+          newStatus ? "connected" : "disconnected"
+        }.`
+      );
     }
   }
 
   private resetWatchdog(minutes: number): void {
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {
-      this.log(`Connection timedout (${minutes} min).`);
+      log.info(`${this.ipAddress}: Connection timedout (${minutes} min).`);
       if (this.request) this.request.cancel();
       this.poll();
     }, minutes * 60000);

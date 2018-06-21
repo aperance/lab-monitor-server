@@ -1,24 +1,23 @@
-import * as winston from "winston";
+import { createLogger, format, transports } from "winston";
+const { combine, timestamp, printf } = format;
+const { File } = transports;
 
-const logger = winston.createLogger({
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(
-      info => `${info.timestamp}: ${info.label}: ${info.message}`
-    )
-  ),
-  transports: [
-    new winston.transports.File({
-      filename: "logs/watcher.log"
-    })
-  ],
-  exceptionHandlers: [
-    new winston.transports.File({ filename: "logs/exceptions.log" })
-  ]
+export const watcher = createLogger({
+  format: combine(timestamp(), printf(x => `${x.timestamp}: ${x.message}`)),
+  transports: [new File({ filename: "logs/watcher.log" })]
 });
 
-const log = (label: string, message: string) => {
-  logger.log({ level: "info", label, message });
-};
+export const actionHandler = createLogger({
+  format: combine(timestamp(), printf(x => `${x.timestamp}: ${x.message}`)),
+  transports: [new File({ filename: "logs/actionHandler.log" })]
+});
 
-export default log;
+export const psToolsHandler = createLogger({
+  format: combine(timestamp(), printf(x => `${x.timestamp}: ${x.message}`)),
+  transports: [new File({ filename: "logs/psToolsHandler.log" })]
+});
+
+export const websocket = createLogger({
+  format: combine(timestamp(), printf(x => `${x.timestamp}: ${x.message}`)),
+  transports: [new File({ filename: "logs/websocket.log" })]
+});

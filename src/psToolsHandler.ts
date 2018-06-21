@@ -1,4 +1,5 @@
 import { exec } from "child_process";
+import { psToolsHandler as log } from "./logger";
 
 const {
   user,
@@ -20,8 +21,16 @@ const psToolsHandler = (target: string, mode: string, argument: string) => {
     argument;
 
   return new Promise((resolve, reject) => {
+    log.info(`STDIN: ${command}`);
     exec(command, (err: Error | null, stdout: string, stderr: string) => {
-      resolve("$ " + command + "\r\n" + stdout + stderr);
+      if (err) {
+        log.error(err);
+        reject(err);
+      } else {
+        log.info(`STDOUT: ${stdout}`);
+        log.info(`STDERR: ${stderr}`);
+        resolve("$ " + command + "\r\n" + stdout + stderr);
+      }
     });
   });
 };

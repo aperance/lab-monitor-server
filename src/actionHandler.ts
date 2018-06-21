@@ -1,4 +1,5 @@
 import * as got from "got";
+import { actionHandler as log } from "./logger";
 
 const actionLookup: {
   [type: string]: {
@@ -25,7 +26,7 @@ const actionHandler = (
             "&level=" +
             parameters.level;
         }
-        console.log(url);
+        log.info(url);
         return got(url, { retries: 0 })
           .then(res => true)
           .catch(err => false);
