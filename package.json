@@ -15,7 +15,6 @@
     "@types/http-proxy": "^1.16.2",
     "@types/jest": "^23.1.0",
     "@types/node": "^10.3.3",
-    "@types/winston": "^2.3.9",
     "@types/ws": "^5.1.2",
     "express": "^4.16.3",
     "express-graphql": "^0.6.12",
