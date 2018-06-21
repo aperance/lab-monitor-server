@@ -1,36 +1,37 @@
 import * as net from "net";
-import * as ws from "ws";
 import * as querystring from "querystring";
+import * as ws from "ws";
+import { vncProxy as log } from "./logger";
 
 const server = new ws.Server({ port: 5000 });
-console.log("VNC proxy listening on port 5000");
+log.info("VNC proxy listening on port 5000");
 
 server.on("connection", (socket, req) => {
   if (!req.url) return;
   const query = querystring.parse(req.url.replace("/?", ""));
   if (typeof query.port !== "string" || typeof query.ip !== "string") return;
-  console.log("VNC proxy connected to client");
+  log.info("VNC proxy connected to client");
 
-  const tcp = net.createConnection(parseInt(query.port), query.ip, () => {
-    console.log("VNC proxy connected to remote server");
+  const tcp = net.createConnection(parseInt(query.port, 10), query.ip, () => {
+    log.info("VNC proxy connected to remote server");
   });
 
   tcp.on("data", data => {
     try {
       socket.send(data);
     } catch (e) {
-      console.log("Client closed, cleaning up target");
+      log.info("Client closed, cleaning up target");
       tcp.end();
     }
   });
 
   tcp.on("end", () => {
-    console.log("VNC target disconnected");
+    log.info("VNC target disconnected");
     socket.close();
   });
 
   tcp.on("error", () => {
-    console.log("VNC target connection error");
+    log.info("VNC target connection error");
     tcp.end();
     socket.close();
   });
@@ -38,12 +39,12 @@ server.on("connection", (socket, req) => {
   socket.on("message", (msg: any) => tcp.write(msg));
 
   socket.on("close", (code: any, reason: string) => {
-    console.log("VNC proxy client disconnected: " + code + " [" + reason + "]");
+    log.info("VNC proxy client disconnected: " + code + " [" + reason + "]");
     tcp.end();
   });
 
   socket.on("error", (e: any) => {
-    console.log("VNC proxy client error: " + e);
+    log.info("VNC proxy client error: " + e);
     tcp.end();
   });
 });
