@@ -1,5 +1,7 @@
 const websocket = require("../websocket.js");
 const { serverMock, socketMock } = require("ws");
+const util = require("util");
+const setTimeoutPromise = util.promisify(setTimeout);
 
 jest.mock("../engine.js");
 const engine = require("../engine.js").default;
@@ -10,7 +12,7 @@ const actionHandler = require("../actionHandler.js").default;
 jest.mock("../psToolsHandler.js");
 const psToolsHandler = require("../psToolsHandler.js").default;
 
-test("ws test", () => {
+test("sends correct repsponse on client connection", () => {
   serverMock.emit("connection", socketMock);
   expect(socketMock.send.mock.calls.length).toBe(1);
   expect(socketMock.send.mock.calls[0][0]).toBe(
@@ -18,7 +20,7 @@ test("ws test", () => {
   );
 });
 
-test("ws test 2", () => {
+test("correctly acts on REFRESH_DEVICE request", () => {
   const message = {
     type: "REFRESH_DEVICE",
     targets: ["127.0.0.1", "127.0.0.2", "127.0.0.3"]
@@ -30,7 +32,7 @@ test("ws test 2", () => {
   expect(engine.refresh.mock.calls[0][0]).toEqual(message.targets);
 });
 
-test("ws test 3", done => {
+test("correctly acts on DEVICE_ACTION request", async () => {
   const message = {
     type: "DEVICE_ACTION",
     targets: ["127.0.0.1", "127.0.0.2", "127.0.0.3"],
@@ -38,17 +40,15 @@ test("ws test 3", done => {
     parameters: {}
   };
   jest.clearAllMocks();
-  actionHandler.mockResolvedValue([true, true, true]);
+  actionHandler.mockResolvedValue([true, false, true]);
   socketMock.emit("message", JSON.stringify(message));
+  await setTimeoutPromise(100);
   expect(engine.refresh.mock.calls.length).toBe(0);
   expect(actionHandler.mock.calls.length).toBe(1);
   expect(psToolsHandler.mock.calls.length).toBe(0);
   expect(actionHandler.mock.calls[0][0]).toEqual(message.targets);
-  setTimeout(() => {
-    expect(socketMock.send.mock.calls.length).toBe(1);
-    expect(socketMock.send.mock.calls[0][0]).toBe(
-      '{"type":"DEVICE_ACTION_RESPONSE","message":{"result":[true,true,true]}}'
-    );
-    done();
-  }, 500);
+  expect(socketMock.send.mock.calls.length).toBe(1);
+  expect(socketMock.send.mock.calls[0][0]).toBe(
+    '{"type":"DEVICE_ACTION_RESPONSE","message":{"result":[true,false,true]}}'
+  );
 });
