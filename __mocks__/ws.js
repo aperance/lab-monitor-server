@@ -10,7 +10,7 @@ const serverMock = new ServerMock();
 class SocketMock extends EventEmitter {
   constructor() {
     super();
-    this.send = jest.fn(() => console.log("sending"));
+    this.send = jest.fn();
   }
 }
 const socketMock = new SocketMock();
