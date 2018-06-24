@@ -2,16 +2,17 @@ import * as got from "got";
 import deviceStore, { State } from "./deviceStore";
 import { watcher as log } from "./logger";
 
+const delay = (seconds: number): Promise<{}> =>
+  new Promise(resolve => setTimeout(resolve, seconds * 1000));
+
 const {
   port,
   path,
-  sequenceKey,
-  maxRetries
+  sequenceKey
 }: {
   port: number;
   path: string;
   sequenceKey: string;
-  maxRetries: number;
 } = require("../config.json").watcher;
 
 class Watcher {
@@ -31,14 +32,17 @@ class Watcher {
   }
 
   public kill(): void {
-    log.info("Killing " + this.ipAddress);
+    log.warn("Killing " + this.ipAddress);
     deviceStore.setInactive(this.ipAddress);
     if (this.timer) clearTimeout(this.timer);
-    if (this.request) this.request.cancel();
+    if (this.request && this.request.cancel) this.request.cancel();
   }
 
+  // private async *stateMachine(): AsyncIterableIterator<string> {
+
+  // }
+
   private async poll(sequence: string = "0"): Promise<void> {
-    if (sequence === "0") log.info(`${this.ipAddress}: Starting Polling...`);
     this.resetWatchdog(1);
     // Fetch state data from device, using url and timeout value from config.
     this.request = got(
@@ -53,9 +57,9 @@ class Watcher {
       this.setStatus(true);
       this.poll(deviceData[sequenceKey]);
     } catch (err) {
-      if (err.name === "CancelError") log.info(`${this.ipAddress}: ${err}`);
+      if (err.name === "CancelError") log.error(`${this.ipAddress}: ${err}`);
       else if (err.name === "RequestError" || "EvalError") {
-        log.info(`${this.ipAddress}: ${err}`);
+        log.error(`${this.ipAddress}: ${err}`);
         if (this.connected) deviceStore.setInactive(this.ipAddress);
         this.setStatus(false);
         if (
@@ -70,6 +74,8 @@ class Watcher {
   }
 
   private evalWrapper(data: string): State {
+    if (!data.startsWith("display("))
+      throw new EvalError("Response from device has an unexpected format");
     try {
       return eval(data.replace("display(", "("));
     } catch (err) {
