@@ -18,6 +18,7 @@ const engine = {
   watcherList: {} as WatcherList,
 
   start() {
+    console.log("Starting engine...");
     addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         this.add(subnet.slice(0, -1) + i);
@@ -32,6 +33,7 @@ const engine = {
 
   add(ipAddress: string) {
     this.watcherList[ipAddress] = this.createWatcher(ipAddress);
+    this.watcherList[ipAddress].start();
   },
 
   refresh(ipAddressArray: string[]) {
