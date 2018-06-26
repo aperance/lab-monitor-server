@@ -1,5 +1,5 @@
 import * as got from "got";
-import deviceStore, { State } from "./deviceStore";
+import deviceStore, { State, Status } from "./deviceStore";
 import { watcher as log } from "./logger";
 
 const {
@@ -11,13 +11,6 @@ const {
   path: string;
   sequenceKey: string;
 } = require("../config.json").watcher;
-
-const enum Status {
-  Connected = "CONNECTED",
-  Retry = "RETRY",
-  Disconnected = "DISCONNECTED",
-  Inactive = "INACTIVE"
-}
 
 class Watcher {
   private ipAddress: string;

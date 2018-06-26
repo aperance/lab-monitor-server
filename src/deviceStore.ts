@@ -21,6 +21,13 @@ const {
   dateFormat: { [key: string]: string };
 } = require("../config.json").deviceStore;
 
+export const enum Status {
+  Connected = "CONNECTED",
+  Retry = "RETRY",
+  Disconnected = "DISCONNECTED",
+  Inactive = "INACTIVE"
+}
+
 export interface State {
   [key: string]: string;
 }
