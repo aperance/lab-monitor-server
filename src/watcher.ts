@@ -38,38 +38,36 @@ class Watcher {
   }
 
   private async poll(sequence: string = "0") {
-    if (this.state === null) return;
+    if (!this.state) return;
     // Fetch state data from device, using url and timeout value from config.
     this.request = got(
       `http://${this.ipAddress}:${port}/${path}?${sequenceKey}=${sequence}`,
-      { retries: 0, timeout: { connect: 10000, socket: 60000 } }
+      { retries: 0, timeout: { connect: 5000, socket: 60000 } }
     );
     try {
       const response = await this.request;
       const deviceData = this.evalWrapper(response.body);
-      const state = this.state.next({ success: true });
+      const { done } = this.state.next({ success: true });
       deviceStore.set(this.ipAddress, deviceData);
-      if (state.done) return;
-      this.poll(deviceData[sequenceKey]);
+      if (!done) this.poll(deviceData[sequenceKey]);
     } catch (err) {
       if (err.name === "CancelError") return;
       if (err.name === "RequestError" || "EvalError") {
         log.error(`${this.ipAddress}: ${err}`);
-        const state = this.state.next({ success: false });
+        const { done, value } = this.state.next({ success: false });
         deviceStore.setInactive(this.ipAddress);
-        if (state.done) return;
-        setTimeout(this.poll.bind(this), state.value.delay);
+        if (!done) setTimeout(this.poll.bind(this), value.delay);
       }
     }
   }
 
   private evalWrapper(data: string): State {
     if (!data.startsWith("display("))
-      throw new EvalError("Response from device has an unexpected format");
+      throw EvalError("Response from device has an unexpected format");
     try {
       return eval(data.replace("display(", "("));
     } catch (err) {
-      throw new EvalError("Unable to parse response string");
+      throw EvalError("Unable to parse response string");
     }
   }
 
