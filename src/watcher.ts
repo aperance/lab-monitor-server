@@ -32,12 +32,12 @@ class Watcher {
 
   public kill(): void {
     log.warn("Killing watcher for " + this.ipAddress);
-    deviceStore.setInactive(this.ipAddress);
+    deviceStore.set(this.ipAddress, Status.Inactive);
     if (this.state && this.state.return) this.state.return();
     if (this.request && this.request.cancel) this.request.cancel();
   }
 
-  private async poll(sequence: string = "0") {
+  private async poll(sequence: string = "0"): Promise<void> {
     if (!this.state) return;
     // Fetch state data from device, using url and timeout value from config.
     this.request = got(
@@ -48,24 +48,24 @@ class Watcher {
       const response = await this.request;
       const deviceData = this.evalWrapper(response.body);
       const { done } = this.state.next({ success: true });
-      deviceStore.set(this.ipAddress, deviceData);
+      deviceStore.set(this.ipAddress, Status.Connected, deviceData);
       if (!done) this.poll(deviceData[sequenceKey]);
     } catch (err) {
       if (err.name === "CancelError") return;
       if (err.name === "RequestError" || "EvalError") {
         log.error(`${this.ipAddress}: ${err}`);
         const { done, value } = this.state.next({ success: false });
-        deviceStore.setInactive(this.ipAddress);
+        deviceStore.set(this.ipAddress, value.status);
         if (!done) setTimeout(this.poll.bind(this), value.delay);
       }
     }
   }
 
   private evalWrapper(data: string): State {
-    if (!data.startsWith("display("))
-      throw EvalError("Response from device has an unexpected format");
     try {
-      return eval(data.replace("display(", "("));
+      const result: State = eval(data.replace("display(", "("));
+      if (!result[sequenceKey]) throw Error();
+      else return result;
     } catch (err) {
       throw EvalError("Unable to parse response string");
     }
