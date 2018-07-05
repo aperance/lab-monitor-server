@@ -55,7 +55,7 @@ interface AccumulatedRecords {
 }
 
 class DeviceStore {
-  private deviceData: Map<string, DeviceRecord>;
+  public deviceData: Map<string, DeviceRecord>;
 
   constructor() {
     this.deviceData = new Map();
