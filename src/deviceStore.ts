@@ -106,7 +106,7 @@ class DeviceStore {
     const modifiedKeys: string[] = Object.keys({ ...prevState, ...newState })
       .filter(key => prevState[key] !== newState[key])
       // Exclude timestamp and status from being recorded in history
-      .filter(key => key === "timestamp" || "status");
+      .filter(key => key !== "timestamp" && key !== "status");
 
     // Generate modified state object by adding latest values to modified keys list.
     const modifiedState: { [key: string]: string | null } = modifiedKeys.reduce(
