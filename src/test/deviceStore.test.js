@@ -2,6 +2,21 @@ jest.mock("../websocket.js", () => ({
   broadcast: jest.fn()
 }));
 
+jest.mock(
+  "../../config.json",
+  () => ({
+    deviceStore: {
+      maxHistory: 5,
+      dateFormat: {
+        weekday: "short",
+        month: "numeric",
+        day: "numeric"
+      }
+    }
+  }),
+  { virtual: true }
+);
+
 const deviceStore = require("../deviceStore.js").default;
 const broadcast = require("../websocket.js").broadcast;
 
@@ -9,10 +24,7 @@ const timestamp = new Date()
   .toLocaleString("en-US", {
     weekday: "short",
     month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric"
+    day: "numeric"
   })
   .replace(/,/g, "");
 
@@ -49,7 +61,29 @@ describe("Set an initial device record", () => {
   });
 });
 
-describe("Set a second device record", () => {
+describe("Attempt to set a new device record with INACTIVE status", () => {
+  const state = { key1: "value1", key2: "value2", key3: "value3" };
+
+  test("websocket.broadcast NOT called with modified data", () => {
+    deviceStore.set("127.0.0.2", "INACTIVE");
+    expect(broadcast.mock.calls.length).toBe(0);
+  });
+
+  test("getAccumulatedRecords provides all records. New device NOT added.", () => {
+    expect(deviceStore.getAccumulatedRecords()).toEqual({
+      state: { "127.0.0.1": { ...state, status: "CONNECTED", timestamp } },
+      history: {
+        "127.0.0.1": {
+          key1: [[timestamp, "value1"]],
+          key2: [[timestamp, "value2"]],
+          key3: [[timestamp, "value3"]]
+        }
+      }
+    });
+  });
+});
+
+describe("Set a new device record", () => {
   const state = { key1: "value1", key2: "value2", key3: "value3" };
 
   test("websocket.broadcast called with modified data", () => {
@@ -425,7 +459,7 @@ describe("Set device record with added, removed, and modified properties", () =>
   test("websocket.broadcast called with modified data", () => {
     deviceStore.set("127.0.0.1", "CONNECTED", {
       key1: "value1a",
-      key2: "value2a",
+      key2: "value2b",
       key4: "value4"
     });
     expect(broadcast.mock.calls.length).toBe(1);
@@ -433,6 +467,7 @@ describe("Set device record with added, removed, and modified properties", () =>
       id: "127.0.0.1",
       state: {
         key1: "value1a",
+        key2: "value2b",
         key3: null,
         key4: "value4",
         status: "CONNECTED",
@@ -440,6 +475,7 @@ describe("Set device record with added, removed, and modified properties", () =>
       },
       history: [
         ["key1", [timestamp, "value1a"]],
+        ["key2", [timestamp, "value2b"]],
         ["key3", [timestamp, null]],
         ["key4", [timestamp, "value4"]]
       ]
@@ -451,7 +487,7 @@ describe("Set device record with added, removed, and modified properties", () =>
       state: {
         "127.0.0.1": {
           key1: "value1a",
-          key2: "value2a",
+          key2: "value2b",
           key4: "value4",
           status: "CONNECTED",
           timestamp
@@ -467,9 +503,74 @@ describe("Set device record with added, removed, and modified properties", () =>
       history: {
         "127.0.0.1": {
           key1: [[timestamp, "value1a"], [timestamp, "value1"]],
-          key2: [[timestamp, "value2a"], [timestamp, "value2"]],
+          key2: [
+            [timestamp, "value2b"],
+            [timestamp, "value2a"],
+            [timestamp, "value2"]
+          ],
           key3: [[timestamp, null], [timestamp, "value3"]],
           key4: [[timestamp, "value4"]]
+        },
+        "127.0.0.2": {
+          key1: [[timestamp, null], [timestamp, "value1"]],
+          key2: [[timestamp, "value2"]],
+          key3: [[timestamp, "value3"]],
+          key4: [[timestamp, "value4"]]
+        }
+      }
+    });
+  });
+});
+
+describe("maxHistory limit is enforced", () => {
+  test("websocket.broadcast called with modified data", () => {
+    deviceStore.set("127.0.0.1", "CONNECTED", { key2: "value2c" });
+    deviceStore.set("127.0.0.1", "CONNECTED", { key2: "value2d" });
+    deviceStore.set("127.0.0.1", "CONNECTED", { key2: "value2e" });
+    expect(broadcast.mock.calls.length).toBe(3);
+    expect(broadcast.mock.calls[2][1]).toEqual({
+      id: "127.0.0.1",
+      state: {
+        key2: "value2e",
+        status: "CONNECTED",
+        timestamp
+      },
+      history: [["key2", [timestamp, "value2e"]]]
+    });
+  });
+
+  test("getAccumulatedRecords provides all records", () => {
+    expect(deviceStore.getAccumulatedRecords()).toEqual({
+      state: {
+        "127.0.0.1": {
+          key2: "value2e",
+          status: "CONNECTED",
+          timestamp
+        },
+        "127.0.0.2": {
+          key2: "value2",
+          key3: "value3",
+          key4: "value4",
+          status: "CONNECTED",
+          timestamp
+        }
+      },
+      history: {
+        "127.0.0.1": {
+          key1: [
+            [timestamp, null],
+            [timestamp, "value1a"],
+            [timestamp, "value1"]
+          ],
+          key2: [
+            [timestamp, "value2e"],
+            [timestamp, "value2d"],
+            [timestamp, "value2c"],
+            [timestamp, "value2b"],
+            [timestamp, "value2a"]
+          ],
+          key3: [[timestamp, null], [timestamp, "value3"]],
+          key4: [[timestamp, null], [timestamp, "value4"]]
         },
         "127.0.0.2": {
           key1: [[timestamp, null], [timestamp, "value1"]],
