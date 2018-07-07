@@ -7,18 +7,13 @@ const {
 }: { user: string; password: string } = require("../config.json").psTools;
 
 const psToolsHandler = (target: string, mode: string, argument: string) => {
-  const command: string =
-    "C:\\PSTools\\" +
-    (mode === "psExec" ? "psexec -d -i " : "") +
-    (mode === "psKill" ? "pskill -t " : "") +
-    "\\\\" +
-    target +
-    " -u \\" +
-    user +
-    " -p " +
-    password +
-    " " +
-    argument;
+  let command: string = "C:\\PSTools\\";
+
+  if (mode === "psExec") command += "psexec -d -i ";
+  else if (mode === "psKill") command += "pskill -t ";
+  else return Promise.reject(new Error("Invalid mode specified."));
+
+  command += `\\\\${target} -u \\${user} -p ${password} ${argument}`;
 
   return new Promise((resolve, reject) => {
     log.info(`STDIN: ${command}`);
