@@ -16,11 +16,13 @@ class Watcher {
   private ipAddress: string;
   private request: got.GotPromise<string> | null;
   private state: IterableIterator<{ status: Status; delay: number }> | null;
+  private timer: NodeJS.Timer | null;
 
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
     this.request = null;
     this.state = null;
+    this.timer = null;
   }
 
   public start(): void {
@@ -35,6 +37,7 @@ class Watcher {
     deviceStore.set(this.ipAddress, Status.Inactive);
     if (this.state && this.state.return) this.state.return();
     if (this.request && this.request.cancel) this.request.cancel();
+    if (this.timer) clearTimeout(this.timer);
   }
 
   private async poll(sequence: string = "0"): Promise<void> {
@@ -58,7 +61,7 @@ class Watcher {
         const { done, value } = this.state.next({ success: false });
         if (done) return;
         deviceStore.set(this.ipAddress, value.status);
-        setTimeout(this.poll.bind(this), value.delay * 60000);
+        this.timer = setTimeout(this.poll.bind(this), value.delay * 60000);
       }
     }
   }
