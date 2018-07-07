@@ -48,15 +48,17 @@ class Watcher {
       const response = await this.request;
       const deviceData = this.evalWrapper(response.body);
       const { done } = this.state.next({ success: true });
+      if (done) return;
       deviceStore.set(this.ipAddress, Status.Connected, deviceData);
-      if (!done) this.poll(deviceData[sequenceKey]);
+      this.poll(deviceData[sequenceKey]);
     } catch (err) {
       if (err.name === "CancelError") return;
       if (err.name === "RequestError" || "EvalError") {
         log.error(`${this.ipAddress}: ${err}`);
         const { done, value } = this.state.next({ success: false });
+        if (done) return;
         deviceStore.set(this.ipAddress, value.status);
-        if (!done) setTimeout(this.poll.bind(this), value.delay);
+        setTimeout(this.poll.bind(this), value.delay * 60000);
       }
     }
   }
