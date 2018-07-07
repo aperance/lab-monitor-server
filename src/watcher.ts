@@ -53,7 +53,7 @@ class Watcher {
       const { done } = this.state.next({ success: true });
       if (done) return;
       deviceStore.set(this.ipAddress, Status.Connected, deviceData);
-      this.poll(deviceData[sequenceKey]);
+      setImmediate(this.poll.bind(this), deviceData[sequenceKey]);
     } catch (err) {
       if (err.name === "CancelError") return;
       if (err.name === "RequestError" || "EvalError") {
