@@ -13,14 +13,12 @@ const {
 } = require("../config.json").watcher;
 
 class Watcher {
-  public testCallback: (() => void) | null;
   private ipAddress: string;
   private request: got.GotPromise<string> | null;
   private state: IterableIterator<{ status: Status; delay: number }> | null;
   private timer: NodeJS.Timer | null;
 
   constructor(ipAddress: string) {
-    this.testCallback = null;
     this.ipAddress = ipAddress;
     this.request = null;
     this.state = null;
@@ -67,7 +65,6 @@ class Watcher {
       if (err.name === "CancelError")
         log.error(`${this.ipAddress}: Request Cancelled`);
     }
-    if (this.testCallback) this.testCallback();
   }
 
   private evalWrapper(data: string): State {
@@ -102,7 +99,7 @@ class Watcher {
         case Status.Disconnected as string:
           if (result.success) status = Status.Connected;
           else if (Date.now() - lastCommunication > 10 * 60000)
-            status = Status.Disconnected;
+            status = Status.Inactive;
           break;
 
         case Status.Inactive as string:
