@@ -43,7 +43,6 @@
     "path": "^0.12.7"
   },
   "jest": {
-    "testEnvironment": "node",
-    "verbose": true
+    "testEnvironment": "node"
   }
 }
