@@ -57,14 +57,15 @@ class Watcher {
       deviceStore.set(this.ipAddress, Status.Connected, deviceData);
       setImmediate(this.poll.bind(this), deviceData[sequenceKey]);
     } catch (err) {
-      if (err.name === "CancelError") return;
-      if (err.name === "RequestError" || "EvalError") {
+      if (err.name === "RequestError" || err.name === "EvalError") {
         log.error(`${this.ipAddress}: ${err}`);
         const { done, value } = this.state.next({ success: false });
         if (done) return;
         deviceStore.set(this.ipAddress, value.status);
         this.timer = setTimeout(this.poll.bind(this), value.delay * 60000);
       }
+      if (err.name === "CancelError")
+        log.error(`${this.ipAddress}: Request Cancelled`);
     }
     if (this.testCallback) this.testCallback();
   }
