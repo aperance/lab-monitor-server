@@ -1,15 +1,4 @@
-// deviceStore.js
-// William Aperance
-//
-// The deviceStore class stores Map of information collected from the polling of devices.
-// Each record in the Map contains a state object and a history object. The state object is
-// the most recent state received from the device. The history object contains, for each
-// state property, an array of the most recent values with timestamp. The size of the array
-// is set in the config file. Each time new state data is received from a device:
-// 1. This data is saved as the state object, plus timestamp.
-// 2. The history object is updated for modified state properties.
-// 3. For both state and history, the changes between new and previous are sent to the subscriber.
-//
+/** @module DeviceStore */
 
 import { broadcast } from "./websocket";
 
@@ -54,15 +43,31 @@ interface AccumulatedRecords {
   };
 }
 
+/**
+ * The deviceStore class stores Map of information collectedfrom the polling
+ * of devices. Each record in the Map contains a state object and a history
+ * object. The state object is the most recent state received from the device.
+ * The history object contains, for each state property, an array of the most
+ * recent values with timestamp. The size of the array is set in the config
+ * file.
+ * @class DeviceStore
+ */
 class DeviceStore {
   private deviceData: Map<string, DeviceRecord>;
 
+  /**
+   * Creates an instance of DeviceStore.
+   */
   constructor() {
     this.deviceData = new Map();
   }
 
-  // Returns all data from Map. All data is sorted into a single
-  // state and single history object, reducing work for client.
+  /**
+   * Returns all data from Map. All data is sorted into a single
+   * state and single history object, reducing work for client.
+   * @public
+   * @returns {AccumulatedRecords}
+   */
   public getAccumulatedRecords(): AccumulatedRecords {
     const recordArray: Array<[string, DeviceRecord]> = Array.from(
       this.deviceData
@@ -77,9 +82,16 @@ class DeviceStore {
     );
   }
 
-  // Updates Map with newly updated state data for given id, and compares new and
-  // previous state data, saving a history of changes in the Map for given id as well.
-  // Changes to state and history are emitted via _callbackOnUpdate function.
+  /**
+   * Updates Map with newly updated state data and connection status for given
+   * id. Also compares new and previous state data, saving a history of changes
+   * in the Map for given id. Changes to state and history are emitted over
+   * websocket via the broadcast function.
+   * @public
+   * @param {string} id
+   * @param {Status} status
+   * @param {State} [newState]
+   */
   public set(id: string, status: Status): void;
   public set(id: string, status: Status.Connected, newState: State): void;
   public set(id: string, status: Status, newState?: State): void {
@@ -154,6 +166,12 @@ class DeviceStore {
     });
   }
 
+  /**
+   * Generates date/time string in desired format.
+   * @readonly
+   * @private
+   * @type {string}
+   */
   private get timestamp(): string {
     return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
   }

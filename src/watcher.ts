@@ -1,3 +1,5 @@
+/** @module Watcher */
+
 import * as got from "got";
 import deviceStore, { State, Status } from "./deviceStore";
 import { watcher as log } from "./logger";
@@ -12,12 +14,21 @@ const {
   sequenceKey: string;
 } = require("../config.json").watcher;
 
+/**
+ * Continuously polls the device at the provided IP address. Received
+ * device data and connection state are sent to the deviceStore.
+ * @class Watcher
+ */
 class Watcher {
   private ipAddress: string;
   private request: got.GotPromise<string> | null;
   private state: IterableIterator<{ status: Status; delay: number }> | null;
   private timer: NodeJS.Timer | null;
 
+  /**
+   * Creates an instance of Watcher for the provided IP address.
+   * @param {string} ipAddress
+   */
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
     this.request = null;
@@ -25,13 +36,24 @@ class Watcher {
     this.timer = null;
   }
 
+  /**
+   * Starts operation of the watcher instance. Instantiates stateGenerator
+   * as this.state and runs poll method (which will continue recursively).
+   * @public
+   */
   public start(): void {
     log.warn("Starting watcher for " + this.ipAddress);
     this.state = this.stateGenerator();
-    this.state.next();
+    this.state.next(); // First next takes no params, so call it once before use in poll().
     this.poll();
   }
 
+  /**
+   * Stops operation of the current instance. Ends the stateGenerator and any
+   * pending request or timeout, which will cause the recursive poll() method
+   * to end. Instance will eventually be garbage collected.
+   * @public
+   */
   public kill(): void {
     log.warn("Killing watcher for " + this.ipAddress);
     deviceStore.set(this.ipAddress, Status.Inactive);
@@ -40,9 +62,26 @@ class Watcher {
     if (this.timer) clearTimeout(this.timer);
   }
 
+  /**
+   * Requests data from device and processes the reponse. Function will loop
+   * indefinitely using recursive calls. Recursive calls may include a sequence
+   * key found in the previous response, to be included in the next request.
+   * This tells the device not to respond to the request until the data has
+   * changed. Delays between cycles are added based on the current state (to
+   * prevent continuous polling of inactive IP addresses). stateGenerator used
+   * to determine new state and delay time based on the reult of the current
+   * request. New state and received device data are sent to the deviceStore.
+   * EvalError, got.RequestError, and got.CancelError are caught and handled.
+   * Runs recursively until got.Request or timeout are cancelled, or the state
+   * generator is ended.
+   * @private
+   * @async
+   * @param {string} [sequence="0"]
+   * @returns {Promise<void>}
+   */
   private async poll(sequence: string = "0"): Promise<void> {
     if (!this.state) return;
-    // Fetch state data from device, using url and timeout value from config.
+    /** Fetch state data from device, using url and timeout value from config */
     this.request = got(
       `http://${this.ipAddress}:${port}/${path}?${sequenceKey}=${sequence}`,
       { retries: 0, timeout: { connect: 5000, socket: 60000 } }
@@ -67,6 +106,15 @@ class Watcher {
     }
   }
 
+  /**
+   * Parses the stringified data received from the device.
+   * Note: Uses eval(). While understood as unsafe, this software is intended
+   * for use in a controlled environment where an attack is extremely unlikely.
+   * @private
+   * @param {string} data
+   * @returns {State}
+   * @throws {EvalError} if unable to parse string.
+   */
   private evalWrapper(data: string): State {
     try {
       const result: State = eval(data.replace("display(", "("));
@@ -77,6 +125,12 @@ class Watcher {
     }
   }
 
+  /**
+   * Creates a state machine to be used by the poll method. Yields new "state"
+   * and "delay" values based on a provided "success" boolean.
+   * @private
+   * @yields { state, delay }
+   */
   private *stateGenerator() {
     let status = Status.Inactive;
     let lastCommunication = 0;
