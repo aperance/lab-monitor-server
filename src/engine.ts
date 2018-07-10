@@ -42,9 +42,11 @@ const engine = {
   refresh(ipAddressArray?: string[]) {
     if (!ipAddressArray) ipAddressArray = Object.keys(this.watcherList);
     ipAddressArray.forEach(ipAddress => {
-      this.watcherList[ipAddress].kill();
-      this.watcherList[ipAddress] = new Watcher(ipAddress);
-      this.watcherList[ipAddress].start();
+      if (this.watcherList[ipAddress]) {
+        this.watcherList[ipAddress].kill();
+        this.watcherList[ipAddress] = new Watcher(ipAddress);
+        this.watcherList[ipAddress].start();
+      }
     });
   }
 };
