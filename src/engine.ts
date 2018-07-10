@@ -1,3 +1,5 @@
+/** @module engine */
+
 import Watcher from "./watcher";
 
 const {
@@ -11,47 +13,39 @@ const {
 } = require("../config.json").engine;
 
 interface WatcherList {
-  [key: string]: Watcher;
+  [ipAddress: string]: Watcher;
 }
 
 const engine = {
   watcherList: {} as WatcherList,
 
+  /**
+   * Iterates over the ranges of IP addresses specified in the config file.
+   * Spawns a watcher instance for each and stores reference in watcherList.
+   */
   start() {
     console.log("Starting engine...");
     addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
-        this.add(subnet.slice(0, -1) + i);
+        const ipAddress = subnet.slice(0, -1) + i;
+        this.watcherList[ipAddress] = new Watcher(ipAddress);
+        this.watcherList[ipAddress].start();
       }
     });
   },
 
-  stop() {
-    Object.values(this.watcherList).map(watcher => watcher.kill());
-    this.watcherList = {};
-  },
-
-  add(ipAddress: string) {
-    this.watcherList[ipAddress] = this.createWatcher(ipAddress);
-    this.watcherList[ipAddress].start();
-  },
-
-  refresh(ipAddressArray: string[]) {
+  /**
+   * For given IP addresses, kills current instance and spawns a new instance.
+   * Refreshes all IP addresses in watcherList if specific list not provided.
+   * @param {string[]} [ipAddressArray]
+   */
+  refresh(ipAddressArray?: string[]) {
+    if (!ipAddressArray) ipAddressArray = Object.keys(this.watcherList);
     ipAddressArray.forEach(ipAddress => {
       this.watcherList[ipAddress].kill();
-      this.watcherList[ipAddress] = this.createWatcher(ipAddress);
+      this.watcherList[ipAddress] = new Watcher(ipAddress);
+      this.watcherList[ipAddress].start();
     });
-  },
-
-  refreshAll() {
-    Object.entries(this.watcherList).map(([ipAddress, watcher]) => {
-      watcher.kill();
-      this.watcherList[ipAddress] = this.createWatcher(ipAddress);
-    });
-  },
-
-  createWatcher(ipAddress: string) {
-    return new Watcher(ipAddress);
   }
 };
 
