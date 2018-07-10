@@ -14,45 +14,49 @@ server.on("connection", (socket, req) => {
   sendToSocket(socket, "DEVICE_DATA_ALL", deviceStore.getAccumulatedRecords());
 
   socket.on("message", function incoming(message) {
-    const data: { [x: string]: any } = JSON.parse(message as string);
-    log.info(data.type + " received");
-
-    switch (data.type) {
-      case "REFRESH_DEVICE":
-        engine.refresh(data.targets);
-        break;
-
-      case "DEVICE_ACTION":
-        actionHandler(data.targets, data.action, data.parameters)
-          .then(result =>
-            sendToSocket(socket, "DEVICE_ACTION_RESPONSE", { result })
-          )
-          .catch(err => log.error(err));
-        break;
-
-      case "PSTOOLS_COMMAND":
-        psToolsHandler(data.target, data.mode, data.cmd)
-          .then(result =>
-            sendToSocket(socket, "PSTOOLS_COMMAND_RESPONSE", { result })
-          )
-          .catch(err => log.error(err));
-        break;
-
-      default:
-        break;
-    }
+    const { type, payload } = JSON.parse(message as string);
+    if (!type || !payload) return;
+    log.info(type + " received");
+    messageRouter(socket, type, payload);
   });
 });
 
-const sendToSocket = (socket: ws, type: string, message: {}) => {
-  log.info(type + " sent to socket");
-  socket.send(JSON.stringify({ type, message }));
+const messageRouter = (socket: ws, type: string, payload: any) => {
+  switch (type) {
+    case "REFRESH_DEVICE":
+      engine.refresh(payload.targets);
+      break;
+
+    case "DEVICE_ACTION":
+      actionHandler(payload.targets, payload.action, payload.parameters)
+        .then(result =>
+          sendToSocket(socket, "DEVICE_ACTION_RESPONSE", { result })
+        )
+        .catch(err => log.error(err));
+      break;
+
+    case "PSTOOLS_COMMAND":
+      psToolsHandler(payload.target, payload.mode, payload.cmd)
+        .then(result =>
+          sendToSocket(socket, "PSTOOLS_COMMAND_RESPONSE", { result })
+        )
+        .catch(err => log.error(err));
+      break;
+
+    default:
+      break;
+  }
 };
 
-const broadcast = (type: string, message: {}) =>
+const sendToSocket = (socket: ws, type: string, payload: {}) => {
+  log.info(type + " sent to socket");
+  socket.send(JSON.stringify({ type, payload }));
+};
+
+const broadcast = (type: string, payload: {}) =>
   server.clients.forEach(client => {
     if (client.readyState === ws.OPEN) {
-      client.send(JSON.stringify({ type, message }));
+      client.send(JSON.stringify({ type, payload }));
     }
   });
 
