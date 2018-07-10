@@ -16,28 +16,30 @@ test("sends correct repsponse on client connection", () => {
   serverMock.emit("connection", socketMock);
   expect(socketMock.send.mock.calls.length).toBe(1);
   expect(socketMock.send.mock.calls[0][0]).toBe(
-    '{"type":"DEVICE_DATA_ALL","message":{"state":{},"history":{}}}'
+    '{"type":"DEVICE_DATA_ALL","payload":{"state":{},"history":{}}}'
   );
 });
 
 test("correctly acts on REFRESH_DEVICE request", () => {
   const message = {
     type: "REFRESH_DEVICE",
-    targets: ["127.0.0.1", "127.0.0.2", "127.0.0.3"]
+    payload: { targets: ["127.0.0.1", "127.0.0.2", "127.0.0.3"] }
   };
   socketMock.emit("message", JSON.stringify(message));
   expect(engine.refresh.mock.calls.length).toBe(1);
   expect(actionHandler.mock.calls.length).toBe(0);
   expect(psToolsHandler.mock.calls.length).toBe(0);
-  expect(engine.refresh.mock.calls[0][0]).toEqual(message.targets);
+  expect(engine.refresh.mock.calls[0][0]).toEqual(message.payload.targets);
 });
 
 test("correctly acts on DEVICE_ACTION request", async () => {
   const message = {
     type: "DEVICE_ACTION",
-    targets: ["127.0.0.1", "127.0.0.2", "127.0.0.3"],
-    action: "testAction",
-    parameters: {}
+    payload: {
+      targets: ["127.0.0.1", "127.0.0.2", "127.0.0.3"],
+      action: "testAction",
+      parameters: {}
+    }
   };
   jest.clearAllMocks();
   actionHandler.mockResolvedValue([true, false, true]);
@@ -46,9 +48,9 @@ test("correctly acts on DEVICE_ACTION request", async () => {
   expect(engine.refresh.mock.calls.length).toBe(0);
   expect(actionHandler.mock.calls.length).toBe(1);
   expect(psToolsHandler.mock.calls.length).toBe(0);
-  expect(actionHandler.mock.calls[0][0]).toEqual(message.targets);
+  expect(actionHandler.mock.calls[0][0]).toEqual(message.payload.targets);
   expect(socketMock.send.mock.calls.length).toBe(1);
   expect(socketMock.send.mock.calls[0][0]).toBe(
-    '{"type":"DEVICE_ACTION_RESPONSE","message":{"result":[true,false,true]}}'
+    '{"type":"DEVICE_ACTION_RESPONSE","payload":{"result":[true,false,true]}}'
   );
 });
