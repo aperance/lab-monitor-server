@@ -1,6 +1,6 @@
 /** @module DeviceStore */
 
-import { broadcast } from "./websocket";
+import { MessageType, sendToAllClients } from "./websocket";
 
 const {
   maxHistory,
@@ -107,7 +107,14 @@ class DeviceStore {
         history: currentRecord.history
       });
       // Send websocket update with only new status
-      broadcast("DEVICE_DATA_UPDATE", { id, state: { status }, history: [] });
+      sendToAllClients({
+        type: MessageType.DeviceDataUpdate,
+        payload: {
+          id,
+          state: { status },
+          history: []
+        }
+      });
       return;
     }
 
@@ -159,10 +166,13 @@ class DeviceStore {
     });
 
     // Emit modified state and modified history via callback.
-    broadcast("DEVICE_DATA_UPDATE", {
-      id,
-      state: { ...modifiedState, status, timestamp: this.timestamp },
-      history: modifiedHistory
+    sendToAllClients({
+      type: MessageType.DeviceDataUpdate,
+      payload: {
+        id,
+        state: { ...modifiedState, status, timestamp: this.timestamp },
+        history: modifiedHistory
+      }
     });
   }
 
