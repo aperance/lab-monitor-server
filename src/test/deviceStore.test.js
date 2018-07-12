@@ -1,5 +1,5 @@
 jest.mock("../websocket.js", () => ({
-  broadcast: jest.fn()
+  sendToAllClients: jest.fn()
 }));
 
 jest.mock(
@@ -18,7 +18,7 @@ jest.mock(
 );
 
 const deviceStore = require("../deviceStore.js").default;
-const broadcast = require("../websocket.js").broadcast;
+const sendToAllClients = require("../websocket.js").sendToAllClients;
 
 const timestamp = new Date()
   .toLocaleString("en-US", {
@@ -28,22 +28,25 @@ const timestamp = new Date()
   })
   .replace(/,/g, "");
 
-beforeEach(() => broadcast.mockClear());
+beforeEach(() => sendToAllClients.mockClear());
 
 describe("Set an initial device record", () => {
   const state = { key1: "value1", key2: "value2", key3: "value3" };
 
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "CONNECTED", state);
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: { ...state, status: "CONNECTED", timestamp },
-      history: [
-        ["key1", [timestamp, "value1"]],
-        ["key2", [timestamp, "value2"]],
-        ["key3", [timestamp, "value3"]]
-      ]
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: { ...state, status: "CONNECTED", timestamp },
+        history: [
+          ["key1", [timestamp, "value1"]],
+          ["key2", [timestamp, "value2"]],
+          ["key3", [timestamp, "value3"]]
+        ]
+      }
     });
   });
 
@@ -64,9 +67,9 @@ describe("Set an initial device record", () => {
 describe("Attempt to set a new device record with INACTIVE status", () => {
   const state = { key1: "value1", key2: "value2", key3: "value3" };
 
-  test("websocket.broadcast NOT called with modified data", () => {
+  test("websocket.sendToAllClients NOT called with modified data", () => {
     deviceStore.set("127.0.0.2", "INACTIVE");
-    expect(broadcast.mock.calls.length).toBe(0);
+    expect(sendToAllClients).not.toHaveBeenCalled();
   });
 
   test("getAccumulatedRecords provides all records. New device NOT added.", () => {
@@ -86,17 +89,20 @@ describe("Attempt to set a new device record with INACTIVE status", () => {
 describe("Set a new device record", () => {
   const state = { key1: "value1", key2: "value2", key3: "value3" };
 
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.2", "CONNECTED", state);
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.2",
-      state: { ...state, status: "CONNECTED", timestamp },
-      history: [
-        ["key1", [timestamp, "value1"]],
-        ["key2", [timestamp, "value2"]],
-        ["key3", [timestamp, "value3"]]
-      ]
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.2",
+        state: { ...state, status: "CONNECTED", timestamp },
+        history: [
+          ["key1", [timestamp, "value1"]],
+          ["key2", [timestamp, "value2"]],
+          ["key3", [timestamp, "value3"]]
+        ]
+      }
     });
   });
 
@@ -123,13 +129,16 @@ describe("Set a new device record", () => {
 });
 
 describe("Set device record with RETRY status", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "RETRY");
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: { status: "RETRY" },
-      history: []
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: { status: "RETRY" },
+        history: []
+      }
     });
   });
 
@@ -168,13 +177,16 @@ describe("Set device record with RETRY status", () => {
 });
 
 describe("Set device record with DISCONNECTED status", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "DISCONNECTED");
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: { status: "DISCONNECTED" },
-      history: []
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: { status: "DISCONNECTED" },
+        history: []
+      }
     });
   });
 
@@ -213,13 +225,16 @@ describe("Set device record with DISCONNECTED status", () => {
 });
 
 describe("Set device record with INACTIVE status", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "INACTIVE");
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: { status: "INACTIVE" },
-      history: []
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: { status: "INACTIVE" },
+        history: []
+      }
     });
   });
 
@@ -260,13 +275,16 @@ describe("Set device record with INACTIVE status", () => {
 describe("Set previously INACTIVE device record to CONNECTED", () => {
   const state = { key1: "value1", key2: "value2", key3: "value3" };
 
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "CONNECTED", state);
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: { status: "CONNECTED", timestamp },
-      history: []
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: { status: "CONNECTED", timestamp },
+        history: []
+      }
     });
   });
 
@@ -305,17 +323,20 @@ describe("Set previously INACTIVE device record to CONNECTED", () => {
 });
 
 describe("Set device record with modified property", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "CONNECTED", {
       key1: "value1",
       key2: "value2a",
       key3: "value3"
     });
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: { key2: "value2a", status: "CONNECTED", timestamp },
-      history: [["key2", [timestamp, "value2a"]]]
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: { key2: "value2a", status: "CONNECTED", timestamp },
+        history: [["key2", [timestamp, "value2a"]]]
+      }
     });
   });
 
@@ -354,18 +375,21 @@ describe("Set device record with modified property", () => {
 });
 
 describe("Set device record with added property", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.2", "CONNECTED", {
       key1: "value1",
       key2: "value2",
       key3: "value3",
       key4: "value4"
     });
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.2",
-      state: { key4: "value4", status: "CONNECTED", timestamp },
-      history: [["key4", [timestamp, "value4"]]]
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.2",
+        state: { key4: "value4", status: "CONNECTED", timestamp },
+        history: [["key4", [timestamp, "value4"]]]
+      }
     });
   });
 
@@ -406,17 +430,20 @@ describe("Set device record with added property", () => {
 });
 
 describe("Set device record with removed property", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.2", "CONNECTED", {
       key2: "value2",
       key3: "value3",
       key4: "value4"
     });
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.2",
-      state: { key1: null, status: "CONNECTED", timestamp },
-      history: [["key1", [timestamp, null]]]
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.2",
+        state: { key1: null, status: "CONNECTED", timestamp },
+        history: [["key1", [timestamp, null]]]
+      }
     });
   });
 
@@ -456,29 +483,32 @@ describe("Set device record with removed property", () => {
 });
 
 describe("Set device record with added, removed, and modified properties", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "CONNECTED", {
       key1: "value1a",
       key2: "value2b",
       key4: "value4"
     });
-    expect(broadcast.mock.calls.length).toBe(1);
-    expect(broadcast.mock.calls[0][1]).toEqual({
-      id: "127.0.0.1",
-      state: {
-        key1: "value1a",
-        key2: "value2b",
-        key3: null,
-        key4: "value4",
-        status: "CONNECTED",
-        timestamp
-      },
-      history: [
-        ["key1", [timestamp, "value1a"]],
-        ["key2", [timestamp, "value2b"]],
-        ["key3", [timestamp, null]],
-        ["key4", [timestamp, "value4"]]
-      ]
+    expect(sendToAllClients).toHaveBeenCalledTimes(1);
+    expect(sendToAllClients).toHaveBeenCalledWith({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: {
+          key1: "value1a",
+          key2: "value2b",
+          key3: null,
+          key4: "value4",
+          status: "CONNECTED",
+          timestamp
+        },
+        history: [
+          ["key1", [timestamp, "value1a"]],
+          ["key2", [timestamp, "value2b"]],
+          ["key3", [timestamp, null]],
+          ["key4", [timestamp, "value4"]]
+        ]
+      }
     });
   });
 
@@ -523,19 +553,22 @@ describe("Set device record with added, removed, and modified properties", () =>
 });
 
 describe("maxHistory limit is enforced", () => {
-  test("websocket.broadcast called with modified data", () => {
+  test("websocket.sendToAllClients called with modified data", () => {
     deviceStore.set("127.0.0.1", "CONNECTED", { key2: "value2c" });
     deviceStore.set("127.0.0.1", "CONNECTED", { key2: "value2d" });
     deviceStore.set("127.0.0.1", "CONNECTED", { key2: "value2e" });
-    expect(broadcast.mock.calls.length).toBe(3);
-    expect(broadcast.mock.calls[2][1]).toEqual({
-      id: "127.0.0.1",
-      state: {
-        key2: "value2e",
-        status: "CONNECTED",
-        timestamp
-      },
-      history: [["key2", [timestamp, "value2e"]]]
+    expect(sendToAllClients.mock.calls.length).toBe(3);
+    expect(sendToAllClients.mock.calls[2][0]).toEqual({
+      type: "DEVICE_DATA_UPDATE",
+      payload: {
+        id: "127.0.0.1",
+        state: {
+          key2: "value2e",
+          status: "CONNECTED",
+          timestamp
+        },
+        history: [["key2", [timestamp, "value2e"]]]
+      }
     });
   });
 
