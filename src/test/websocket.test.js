@@ -48,9 +48,5 @@ test("correctly acts on DEVICE_ACTION request", async () => {
   expect(engine.refresh.mock.calls.length).toBe(0);
   expect(actionHandler.mock.calls.length).toBe(1);
   expect(psToolsHandler.mock.calls.length).toBe(0);
-  expect(actionHandler.mock.calls[0][0]).toEqual(message.payload.targets);
-  expect(socketMock.send.mock.calls.length).toBe(1);
-  expect(socketMock.send.mock.calls[0][0]).toBe(
-    '{"type":"DEVICE_ACTION_RESPONSE","payload":{"result":[true,false,true]}}'
-  );
+  expect(actionHandler.mock.calls[0][0]).toEqual(message.payload);
 });
