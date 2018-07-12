@@ -3,7 +3,10 @@ const { combine, timestamp, printf } = format;
 const { File } = transports;
 
 export const actionHandler = createLogger({
-  format: combine(timestamp(), printf(x => `${x.timestamp}: ${x.message}`)),
+  format: combine(
+    timestamp(),
+    printf(x => `${x.timestamp}: ${JSON.stringify(x.message)}`)
+  ),
   transports: [new File({ filename: "logs/actionHandler.log" })]
 });
 
