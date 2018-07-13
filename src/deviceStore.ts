@@ -34,6 +34,8 @@ export interface ModifiedState {
   [key: string]: string | null;
 }
 
+interface ModifiedHistory extends Array<[string, [string, string | null]]> {}
+
 interface AccumulatedRecords {
   state: {
     [key: string]: State;
@@ -93,12 +95,12 @@ class DeviceStore {
    * @param {State} [newState]
    */
   public set(id: string, status: Status): void;
-  public set(id: string, status: Status.Connected, newState: State): void;
-  public set(id: string, status: Status, newState?: State): void {
+  public set(id: string, status: Status.Connected, updatedState: State): void;
+  public set(id: string, status: Status, updatedState?: State): void {
     // Get previous device record from Map for given id (undefined if no previous record)
     const currentRecord = this.deviceData.get(id);
 
-    if (!newState) {
+    if (!updatedState) {
       // Prevent new record from being created with only status set
       if (!currentRecord) return;
       // Inject new status into existing record
@@ -121,48 +123,18 @@ class DeviceStore {
     const prevState: State = currentRecord ? currentRecord.state : {};
     const prevHistory: History = currentRecord ? currentRecord.history : {};
 
-    // Generate list of properties that have changed between the previous and new state data.
-    const modifiedKeys: string[] = Object.keys({ ...prevState, ...newState })
-      .filter(key => prevState[key] !== newState[key])
-      // Exclude timestamp and status from being recorded in history
-      .filter(key => key !== "timestamp" && key !== "status");
-
-    // Generate modified state object by adding latest values to modified keys list.
-    const modifiedState: { [key: string]: string | null } = modifiedKeys.reduce(
-      (stateAcc, propertyKey) => {
-        stateAcc[propertyKey] = newState[propertyKey] || null;
-        return stateAcc;
-      },
-      {} as { [key: string]: string | null }
-    );
-
-    // Generate modified history array by adding latest values and timestamps to modified keys list.
-    const modifiedHistory = modifiedKeys.map(
-      (propertyKey): [string, [string, string | null]] => {
-        const propertyValue = modifiedState[propertyKey];
-        return [propertyKey, [this.timestamp, propertyValue]];
-      }
-    );
-
-    // Generate updated history object by merging modified history records into
-    // previous history object, popping oldest records if max size setting exceeded.
-    const newHistory: History = modifiedHistory.reduce(
-      (history: History, [propertyKey, newRecord]) => {
-        // If property dosent exist, add it and set to empty array
-        if (!history[propertyKey]) history[propertyKey] = [];
-        // Push new record to top of array
-        history[propertyKey] = [newRecord, ...history[propertyKey]];
-        while (history[propertyKey].length > maxHistory)
-          history[propertyKey].pop();
-        return history;
-      },
-      { ...prevHistory }
+    const keys = this.getKeysOfModifiedValues(prevState, updatedState);
+    const modifiedState = this.reduceStateToModifiedOnly(keys, updatedState);
+    const modifiedHistory = this.mapModifiedStateToHistory(keys, modifiedState);
+    const updatedHistory = this.mergeUpdatesIntoHistory(
+      prevHistory,
+      modifiedHistory
     );
 
     // Save latest state and updated history objects to Map.
     this.deviceData.set(id, {
-      state: { ...newState, status, timestamp: this.timestamp },
-      history: newHistory
+      state: { ...updatedState, status, timestamp: this.timestamp },
+      history: updatedHistory
     });
 
     // Emit modified state and modified history via callback.
@@ -184,6 +156,90 @@ class DeviceStore {
    */
   private get timestamp(): string {
     return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
+  }
+
+  /**
+   * Generate list of properties that have changed between the previous and
+   * new state data.
+   * @private
+   * @param {State} prevState
+   * @param {State} newState
+   * @returns {string[]}
+   */
+  private getKeysOfModifiedValues(prevState: State, newState: State): string[] {
+    return (
+      Object.keys({ ...prevState, ...newState })
+        .filter(key => prevState[key] !== newState[key])
+        // Exclude timestamp and status from being recorded in history
+        .filter(key => key !== "timestamp" && key !== "status")
+    );
+  }
+
+  /**
+   * Generate modified state object by adding latest values to modified
+   * keys list.
+   * @private
+   * @param {string[]} modifiedKeys
+   * @param {State} newState
+   * @returns {ModifiedState}
+   */
+  private reduceStateToModifiedOnly(
+    modifiedKeys: string[],
+    newState: State
+  ): ModifiedState {
+    return modifiedKeys.reduce(
+      (stateAcc, propertyKey) => {
+        stateAcc[propertyKey] = newState[propertyKey] || null;
+        return stateAcc;
+      },
+      {} as ModifiedState
+    );
+  }
+
+  /**
+   * Generate modified history array by adding latest values and timestamps
+   * to modified keys list.
+   * @private
+   * @param {string[]} modifiedKeys
+   * @param {ModifiedState} modifiedState
+   * @returns {ModifiedHistory}
+   */
+  private mapModifiedStateToHistory(
+    modifiedKeys: string[],
+    modifiedState: ModifiedState
+  ): ModifiedHistory {
+    return modifiedKeys.map(
+      (key): [string, [string, string | null]] => {
+        const value = modifiedState[key];
+        return [key, [this.timestamp, value]];
+      }
+    );
+  }
+
+  /**
+   * Generate updated history object by merging modified history records
+   * into previous history object, popping oldest records if max size
+   * setting exceeded.
+   * @private
+   * @param {History} prevHistory
+   * @param {ModifiedHistory} modifiedHistory
+   * @returns {History}
+   */
+  private mergeUpdatesIntoHistory(
+    prevHistory: History,
+    modifiedHistory: ModifiedHistory
+  ): History {
+    return modifiedHistory.reduce(
+      (history: History, [key, newRecord]) => {
+        // If property dosent exist, add it and set to empty array
+        if (!history[key]) history[key] = [];
+        // Push new record to top of array
+        history[key] = [newRecord, ...history[key]];
+        while (history[key].length > maxHistory) history[key].pop();
+        return history;
+      },
+      { ...prevHistory }
+    );
   }
 }
 
