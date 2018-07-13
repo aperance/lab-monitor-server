@@ -11,17 +11,35 @@ const actionLookup: {
   };
 } = require("../config.json").actions;
 
+interface ActionRequest {
+  targets: string[];
+  type: string;
+  parameters?: { [key: string]: any };
+}
+
+interface ActionResult {
+  err: Error | null;
+  success: boolean;
+}
+
+interface ActionResponse {
+  err: Error | null;
+  results: ActionResult[] | null;
+}
+
 /**
  * Handles request from client to perform actions on devices.
  * @async
  * @param {actionRequest} action Type, parameters, and targets for action.
  * @returns {Promise} Results to be sent back to client. Should not reject.
  */
-const actionHandler = async (actionRequest: { [key: string]: any }) => {
+const actionHandler = async (
+  actionRequest: ActionRequest
+): Promise<ActionResponse> => {
   log.info(actionRequest);
   try {
     validateParamaters(actionRequest);
-    const results = await sendRequests(actionRequest);
+    const results: ActionResult[] = await sendRequests(actionRequest);
     log.info(results);
     return { err: null, results };
   } catch (err) {
@@ -35,7 +53,7 @@ const actionHandler = async (actionRequest: { [key: string]: any }) => {
  * @param {actionRequest}
  * @throws {Error} on mismatch
  */
-const validateParamaters = (actionRequest: { [x: string]: any }) => {
+const validateParamaters = (actionRequest: ActionRequest) => {
   const actionConfig = actionLookup[actionRequest.type];
   if (!actionConfig)
     throw new Error("Unknown action type specified: " + actionRequest.type);
@@ -54,7 +72,7 @@ const validateParamaters = (actionRequest: { [x: string]: any }) => {
  * @param {actionRequest}
  * @returns {Promise} Array of results for each request.
  */
-const sendRequests = (actionRequest: { [x: string]: any }) => {
+const sendRequests = (actionRequest: ActionRequest) => {
   const { path, parameters } = actionLookup[actionRequest.type];
   return Promise.all(
     actionRequest.targets.map((ipAddress: string) => {
