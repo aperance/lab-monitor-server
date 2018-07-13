@@ -25,16 +25,16 @@ interface History {
   [key: string]: Array<[string, string | null]>;
 }
 
-interface DeviceRecord {
-  state: State;
-  history: History;
-}
-
-export interface ModifiedState {
+interface StateDiff {
   [key: string]: string | null;
 }
 
 interface HistoryDiff extends Array<[string, [string, string | null]]> {}
+
+interface DeviceRecord {
+  state: State;
+  history: History;
+}
 
 interface AccumulatedRecords {
   state: {
@@ -92,51 +92,41 @@ class DeviceStore {
    * @public
    * @param {string} id
    * @param {Status} status
-   * @param {State} [newState]
+   * @param {State} [receivedState]
    */
   public set(id: string, status: Status): void;
-  public set(id: string, status: Status.Connected, newState: State): void;
-  public set(id: string, status: Status, newState?: State): void {
-    // Get previous device record from Map for given id (undefined if no previous record)
-    const currentRecord = this.deviceData.get(id);
+  public set(id: string, status: Status.Connected, receivedState: State): void;
+  public set(id: string, status: Status, receivedState?: State): void {
+    let nextState: State;
+    let nextHistory: History;
+    let stateDiff: StateDiff;
+    let historyDiff: HistoryDiff;
 
-    if (!newState) {
-      // Prevent new record from being created with only status set
-      if (!currentRecord) return;
-      // Inject new status into existing record
-      this.deviceData.set(id, {
-        state: { ...currentRecord.state, status },
-        history: currentRecord.history
-      });
-      // Send websocket update with only new status
-      sendToAllClients({
-        type: MessageType.DeviceDataUpdate,
-        payload: { id, state: { status }, history: [] }
-      });
-      return;
+    /** Prevent new record creation unless connection to device was established */
+    if (status !== Status.Connected && !this.deviceData.has(id)) return;
+
+    /** Get previous device record from Map for given id */
+    const current = this.deviceData.get(id) || { state: {}, history: {} };
+
+    if (receivedState) {
+      nextState = { ...receivedState, status, timestamp: this.timestamp };
+      stateDiff = this.reduceStateToModifiedOnly(current.state, nextState);
+      historyDiff = this.mapStateDiffToHistoryDiff(stateDiff);
+      nextHistory = this.mergeDiffIntoHistory(current.history, historyDiff);
+    } else {
+      nextState = { ...current.state, status };
+      stateDiff = { status };
+      historyDiff = [];
+      nextHistory = current.history;
     }
 
-    const prevState: State = currentRecord ? currentRecord.state : {};
-    const prevHistory: History = currentRecord ? currentRecord.history : {};
-
-    const stateDiff = this.reduceStateToModifiedOnly(prevState, newState);
-    const historyDiff = this.mapStateDiffToHistoryDiff(stateDiff);
-    const newHistory = this.mergeDiffIntoHistory(prevHistory, historyDiff);
-
     // Save latest state and updated history objects to Map.
-    this.deviceData.set(id, {
-      state: { ...newState, status, timestamp: this.timestamp },
-      history: newHistory
-    });
+    this.deviceData.set(id, { state: nextState, history: nextHistory });
 
     // Emit modified state and modified history via callback.
     sendToAllClients({
       type: MessageType.DeviceDataUpdate,
-      payload: {
-        id,
-        state: { ...stateDiff, status, timestamp: this.timestamp },
-        history: historyDiff
-      }
+      payload: { id, state: stateDiff, history: historyDiff }
     });
   }
 
@@ -146,36 +136,37 @@ class DeviceStore {
    * @private
    * @param {State} prevState
    * @param {State} newState
-   * @returns {ModifiedState}
+   * @returns {StateDiff}
    */
   private reduceStateToModifiedOnly(prevState: State, newState: State) {
-    return (
-      Object.keys({ ...prevState, ...newState })
-        .filter(key => prevState[key] !== newState[key])
-        // Exclude timestamp and status from being recorded in history
-        .filter(key => key !== "timestamp" && key !== "status")
-        .reduce(
-          (stateAcc, propertyKey) => {
-            stateAcc[propertyKey] = newState[propertyKey] || null;
-            return stateAcc;
-          },
-          {} as ModifiedState
-        )
-    );
+    return Object.keys({ ...prevState, ...newState })
+      .filter(key => prevState[key] !== newState[key])
+      .reduce(
+        (stateAcc, propertyKey) => {
+          stateAcc[propertyKey] = newState[propertyKey] || null;
+          return stateAcc;
+        },
+        {} as StateDiff
+      );
   }
 
   /**
    * Generate modified history array by adding latest values and timestamps
    * to modified keys list.
    * @private
-   * @param {ModifiedState} modifiedState
+   * @param {StateDiff} stateDiff
    * @returns {HistoryDiff}
    */
-  private mapStateDiffToHistoryDiff(modifiedState: ModifiedState) {
-    return Object.entries(modifiedState).map(
-      ([key, value]): [string, [string, string | null]] => {
-        return [key, [this.timestamp, value]];
-      }
+  private mapStateDiffToHistoryDiff(stateDiff: StateDiff) {
+    return (
+      Object.entries(stateDiff)
+        // Exclude timestamp and status from being recorded in history
+        .filter(([key, value]) => key !== "timestamp" && key !== "status")
+        .map(
+          ([key, value]): [string, [string, string | null]] => {
+            return [key, [this.timestamp, value]];
+          }
+        )
     );
   }
 
