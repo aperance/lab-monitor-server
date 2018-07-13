@@ -282,7 +282,7 @@ describe("Set previously INACTIVE device record to CONNECTED", () => {
       type: "DEVICE_DATA_UPDATE",
       payload: {
         id: "127.0.0.1",
-        state: { status: "CONNECTED", timestamp },
+        state: { status: "CONNECTED" },
         history: []
       }
     });
@@ -334,7 +334,7 @@ describe("Set device record with modified property", () => {
       type: "DEVICE_DATA_UPDATE",
       payload: {
         id: "127.0.0.1",
-        state: { key2: "value2a", status: "CONNECTED", timestamp },
+        state: { key2: "value2a" },
         history: [["key2", [timestamp, "value2a"]]]
       }
     });
@@ -387,7 +387,7 @@ describe("Set device record with added property", () => {
       type: "DEVICE_DATA_UPDATE",
       payload: {
         id: "127.0.0.2",
-        state: { key4: "value4", status: "CONNECTED", timestamp },
+        state: { key4: "value4" },
         history: [["key4", [timestamp, "value4"]]]
       }
     });
@@ -441,7 +441,7 @@ describe("Set device record with removed property", () => {
       type: "DEVICE_DATA_UPDATE",
       payload: {
         id: "127.0.0.2",
-        state: { key1: null, status: "CONNECTED", timestamp },
+        state: { key1: null },
         history: [["key1", [timestamp, null]]]
       }
     });
@@ -498,9 +498,7 @@ describe("Set device record with added, removed, and modified properties", () =>
           key1: "value1a",
           key2: "value2b",
           key3: null,
-          key4: "value4",
-          status: "CONNECTED",
-          timestamp
+          key4: "value4"
         },
         history: [
           ["key1", [timestamp, "value1a"]],
@@ -563,9 +561,7 @@ describe("maxHistory limit is enforced", () => {
       payload: {
         id: "127.0.0.1",
         state: {
-          key2: "value2e",
-          status: "CONNECTED",
-          timestamp
+          key2: "value2e"
         },
         history: [["key2", [timestamp, "value2e"]]]
       }
