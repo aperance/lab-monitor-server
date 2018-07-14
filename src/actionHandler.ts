@@ -33,13 +33,11 @@ interface ActionResponse {
  * @param {actionRequest} action Type, parameters, and targets for action.
  * @returns {Promise} Results to be sent back to client. Should not reject.
  */
-const actionHandler = async (
-  actionRequest: ActionRequest
-): Promise<ActionResponse> => {
-  log.info(actionRequest);
+const actionHandler = async (request: any): Promise<ActionResponse> => {
   try {
-    validateParamaters(actionRequest);
-    const results: ActionResult[] = await sendRequests(actionRequest);
+    const validatedRequest: ActionRequest = validateParamaters(request);
+    log.info(validatedRequest);
+    const results: ActionResult[] = await sendRequests(validatedRequest);
     log.info(results);
     return { err: null, results };
   } catch (err) {
@@ -53,7 +51,7 @@ const actionHandler = async (
  * @param {actionRequest}
  * @throws {Error} on mismatch
  */
-const validateParamaters = (actionRequest: ActionRequest) => {
+const validateParamaters = (actionRequest: any): ActionRequest => {
   const actionConfig = actionLookup[actionRequest.type];
   if (!actionConfig)
     throw new Error("Unknown action type specified: " + actionRequest.type);
@@ -65,6 +63,7 @@ const validateParamaters = (actionRequest: ActionRequest) => {
   )
     throw new Error(`Invalid parameters for action: ${actionRequest.type}.
       Expected ${expected}. Recevied ${received}.`);
+  return actionRequest;
 };
 
 /**

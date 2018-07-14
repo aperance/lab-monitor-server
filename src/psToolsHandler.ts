@@ -6,7 +6,10 @@ const {
   password
 }: { user: string; password: string } = require("../config.json").psTools;
 
-const psToolsHandler = (target: string, mode: string, argument: string) => {
+const psToolsHandler = (req: any): Promise<Error | string> => {
+  const { target, mode, argument } = req;
+  // if (typeof target !== "string") return;
+
   let command: string = "C:\\PSTools\\";
 
   if (mode === "psExec") command += "psexec -d -i ";
