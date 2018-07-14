@@ -1,3 +1,5 @@
+/** @module websocket */
+
 import * as ws from "ws";
 import actionHandler from "./actionHandler";
 import deviceStore from "./deviceStore";
@@ -24,9 +26,17 @@ const enum MessageType {
   Error = "ERROR"
 }
 
+/**
+ * Create new WebSocket server on port 4000.
+ */
 const server = new ws.Server({ port: 4000 });
 log.info("WebSocket handler listening on port 4000");
 
+/**
+ * On WebSocket connection event:
+ * 1. Reply to client with full device records.
+ * 2. Set message event listener for current socket.
+ */
 server.on("connection", (socket, req) => {
   log.info("WebSocket handler connected to client");
 
@@ -35,6 +45,9 @@ server.on("connection", (socket, req) => {
     payload: deviceStore.getAccumulatedRecords()
   });
 
+  /**
+   * On socket message event, parse message and call inboundMessageRouter.
+   */
   socket.on("message", function incoming(messageString) {
     const inboundMessage = JSON.parse(messageString as string);
     inboundMessageRouter(socket, inboundMessage);
@@ -42,7 +55,7 @@ server.on("connection", (socket, req) => {
 });
 
 /**
- *
+ * Send message to client on the specifed socket.
  *
  * @param {ws} socket
  * @param {Message} outboundMessage
@@ -53,7 +66,7 @@ const sendToClient = (socket: ws, outboundMessage: Message) => {
 };
 
 /**
- *
+ * Send message to all clients connected to server.
  *
  * @param {Message} outboundMessage
  */
@@ -67,6 +80,8 @@ const sendToAllClients = (outboundMessage: Message) => {
 };
 
 /**
+ * Routes incoming ws messages to intended handlers.
+ * Data returned from handlers are sent back to client.
  *
  * @async
  * @param {ws} socket
@@ -83,18 +98,18 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: Message) => {
       break;
 
     case MessageType.DeviceAction:
-      const actionResults = await actionHandler(inboundMessage.payload);
+      const actionResponse = await actionHandler(inboundMessage.payload);
       sendToClient(socket, {
         type: MessageType.DeviceActionResponse,
-        payload: actionResults
+        payload: actionResponse
       });
       break;
 
     case MessageType.PsToolsCommand:
-      const psToolsResults = await psToolsHandler(inboundMessage.payload);
+      const psToolsResponse = await psToolsHandler(inboundMessage.payload);
       sendToClient(socket, {
         type: MessageType.PsToolsCommandResponse,
-        payload: { psToolsResults }
+        payload: psToolsResponse
       });
       break;
 

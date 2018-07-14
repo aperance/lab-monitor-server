@@ -11,33 +11,38 @@ const actionLookup: {
   };
 } = require("../config.json").actions;
 
-interface ActionRequest {
+interface Request {
+  [x: string]: any;
+}
+
+interface ValidatedRequest {
   targets: string[];
   type: string;
   parameters?: { [key: string]: any };
 }
 
-interface ActionResult {
+interface Result {
   err: Error | null;
   success: boolean;
 }
 
-interface ActionResponse {
+interface Response {
   err: Error | null;
-  results: ActionResult[] | null;
+  results: Result[] | null;
 }
 
 /**
  * Handles request from client to perform actions on devices.
+ *
  * @async
  * @param {actionRequest} action Type, parameters, and targets for action.
  * @returns {Promise} Results to be sent back to client. Should not reject.
  */
-const actionHandler = async (request: any): Promise<ActionResponse> => {
+const actionHandler = async (request: Request): Promise<Response> => {
   try {
-    const validatedRequest: ActionRequest = validateParamaters(request);
+    const validatedRequest: ValidatedRequest = validateParamaters(request);
     log.info(validatedRequest);
-    const results: ActionResult[] = await sendRequests(validatedRequest);
+    const results: Result[] = await sendRequests(validatedRequest);
     log.info(results);
     return { err: null, results };
   } catch (err) {
@@ -48,30 +53,32 @@ const actionHandler = async (request: any): Promise<ActionResponse> => {
 
 /**
  * Ensure parameter names exactly match thoes listed in config file.
- * @param {actionRequest}
+ *
+ * @param {Request} request
+ * @returns {ValidatedRequest}
  * @throws {Error} on mismatch
  */
-const validateParamaters = (actionRequest: any): ActionRequest => {
-  const actionConfig = actionLookup[actionRequest.type];
-  if (!actionConfig)
-    throw new Error("Unknown action type specified: " + actionRequest.type);
-  const expected = actionLookup[actionRequest.type].parameters.sort();
-  const received = Object.keys(actionRequest.parameters || {}).sort();
+const validateParamaters = (request: Request): ValidatedRequest => {
+  if (!actionLookup[request.type])
+    throw new Error("Unknown action type specified: " + request.type);
+  const expected = actionLookup[request.type].parameters.sort();
+  const received = Object.keys(request.parameters || {}).sort();
   if (
     expected.length !== received.length ||
     !expected.every((param: string, index: number) => param === received[index])
   )
-    throw new Error(`Invalid parameters for action: ${actionRequest.type}.
+    throw new Error(`Invalid parameters for action: ${request.type}.
       Expected ${expected}. Recevied ${received}.`);
-  return actionRequest;
+  return request as ValidatedRequest;
 };
 
 /**
  * Sends specified action request to all target devices.
- * @param {actionRequest}
- * @returns {Promise} Array of results for each request.
+ *
+ * @param {ValidatedRequest} actionRequest
+ * @returns {Promise<Result[]>} Array of results for each request.
  */
-const sendRequests = (actionRequest: ActionRequest) => {
+const sendRequests = (actionRequest: ValidatedRequest): Promise<Result[]> => {
   const { path, parameters } = actionLookup[actionRequest.type];
   return Promise.all(
     actionRequest.targets.map((ipAddress: string) => {
