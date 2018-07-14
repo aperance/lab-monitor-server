@@ -1,3 +1,5 @@
+/** @module psToolsHandler */
+
 import { exec } from "child_process";
 import { psToolsHandler as log } from "./logger";
 
@@ -6,28 +8,57 @@ const {
   password
 }: { user: string; password: string } = require("../config.json").psTools;
 
-const psToolsHandler = (req: any): Promise<Error | string> => {
-  const { target, mode, argument } = req;
-  // if (typeof target !== "string") return;
+interface Request {
+  [x: string]: string;
+}
 
-  let command: string = "C:\\PSTools\\";
+interface Response {
+  err: Error | null;
+  result: string | null;
+}
 
-  if (mode === "psExec") command += "psexec -d -i ";
-  else if (mode === "psKill") command += "pskill -t ";
-  else return Promise.reject(new Error("Invalid mode specified."));
+/**
+ * Utilizes PSTools (as child process) to run the provided command on the
+ * target device. Errors are caught and included in response to client.
+ *
+ * @async
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
+const psToolsHandler = async (request: Request): Promise<Response> => {
+  try {
+    const { target, mode, argument } = request;
+    let command: string = "C:\\PSTools\\";
 
-  command += `\\\\${target} -u \\${user} -p ${password} ${argument}`;
+    if (mode === "psExec") command += "psexec -d -i ";
+    else if (mode === "psKill") command += "pskill -t ";
+    else throw Error("Invalid mode specified.");
 
+    command += `\\\\${target} -u \\${user} -p ${password} ${argument}`;
+    const output = await executeCommand(command);
+    return { err: null, result: "$ " + command + "\r\n" + output };
+  } catch (err) {
+    log.error(err);
+    return { err, result: null };
+  }
+};
+
+/**
+ * Executes PsTools as child process. Returns promise that resolves with
+ * output string received from target device, or rejects with error.
+ *
+ * @param {string} command
+ * @returns {Promise<string | Error>}
+ */
+const executeCommand = (command: string): Promise<string | Error> => {
+  log.info("STDIN: " + command);
   return new Promise((resolve, reject) => {
-    log.info(`STDIN: ${command}`);
-    exec(command, (err: Error | null, stdout: string, stderr: string) => {
-      if (err) {
-        log.error(err);
-        reject(err);
-      } else {
-        log.info(`STDOUT: ${stdout}`);
-        log.info(`STDERR: ${stderr}`);
-        resolve("$ " + command + "\r\n" + stdout + stderr);
+    exec(command, (err, stdout, stderr) => {
+      if (err) reject(err);
+      else {
+        log.info("STDOUT: " + stdout);
+        log.info("STDERR: " + stderr);
+        resolve(stdout + stderr);
       }
     });
   });
