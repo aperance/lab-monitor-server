@@ -1,3 +1,5 @@
+/** @module vncProxy */
+
 import * as net from "net";
 import * as querystring from "querystring";
 import * as ws from "ws";
@@ -6,6 +8,10 @@ import { vncProxy as log } from "./logger";
 const server = new ws.Server({ port: 5000 });
 log.info("VNC proxy listening on port 5000");
 
+/**
+ * On WebSocket connection, establish VNC (TCP) connection to target device,
+ * begin passing data between the WebSocket and VNC connections.
+ */
 server.on("connection", (socket, req) => {
   if (!req.url) return;
   const { port, ip } = querystring.parse(req.url.replace("/?", ""));
@@ -16,8 +22,11 @@ server.on("connection", (socket, req) => {
   });
 
   socket.on("message", data => tcp.write(data));
-
   tcp.on("data", data => socket.send(data));
+
+  /**
+   * Disconnection and Error Handling
+   */
 
   socket.on("close", () => {
     log.info("WS client disconnected");
