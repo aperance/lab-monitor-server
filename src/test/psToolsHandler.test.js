@@ -14,54 +14,65 @@ jest.mock(
 jest.mock("child_process");
 const exec = require("child_process").exec;
 
-test("psExec without error", async () => {
+test("psExec without error", () => {
   exec.mockImplementation((str, cb) => cb(null, "(stdout)", "(stderr)"));
-  expect.assertions(1);
   const request = {
     target: "127.0.0.1",
     mode: "psExec",
     argument: "(testString)"
   };
-  const result = await psToolsHandler(request);
-  expect(result).toEqual(
-    "$ C:\\PSTools\\psexec -d -i \\\\127.0.0.1 -u \\(testUser) -p (testPassword) (testString)\r\n(stdout)(stderr)"
-  );
+  return psToolsHandler(request).then(result => {
+    expect(result).toEqual({
+      err: null,
+      result:
+        "$ C:\\PSTools\\psexec -d -i \\\\127.0.0.1 -u \\(testUser) " +
+        "-p (testPassword) (testString)\r\n(stdout)(stderr)"
+    });
+  });
 });
 
-test("psKill without error", async () => {
+test("psKill without error", () => {
   exec.mockImplementation((str, cb) => cb(null, "(stdout)", "(stderr)"));
-  expect.assertions(1);
   const request = {
     target: "127.0.0.1",
     mode: "psKill",
     argument: "(testString)"
   };
-  const result = await psToolsHandler(request);
-  expect(result).toEqual(
-    "$ C:\\PSTools\\pskill -t \\\\127.0.0.1 -u \\(testUser) -p (testPassword) (testString)\r\n(stdout)(stderr)"
-  );
+  return psToolsHandler(request).then(result => {
+    expect(result).toEqual({
+      err: null,
+      result:
+        "$ C:\\PSTools\\pskill -t \\\\127.0.0.1 -u \\(testUser) " +
+        "-p (testPassword) (testString)\r\n(stdout)(stderr)"
+    });
+  });
 });
 
-test("invalid mode", async () => {
-  expect.assertions(1);
-  try {
-    const result = await psToolsHandler("127.0.0.1", "psErr", "(testString)");
-  } catch (err) {
-    expect(err).toEqual(new Error("Invalid mode specified."));
-  }
+test("invalid mode", () => {
+  const request = {
+    target: "127.0.0.1",
+    mode: "psError",
+    argument: "(testString)"
+  };
+  return psToolsHandler(request).then(result => {
+    expect(result).toEqual({
+      err: Error("Invalid mode specified."),
+      result: null
+    });
+  });
 });
 
-test("exec returns error", async () => {
+test("exec returns error", () => {
   exec.mockImplementation((str, cb) => cb(new Error("TEST ERROR")));
-  expect.assertions(1);
-  try {
-    const request = {
-      target: "127.0.0.1",
-      mode: "psExec",
-      argument: "(testString)"
-    };
-    const result = await psToolsHandler(request);
-  } catch (err) {
-    expect(err).toEqual(new Error("TEST ERROR"));
-  }
+  const request = {
+    target: "127.0.0.1",
+    mode: "psExec",
+    argument: "(testString)"
+  };
+  return psToolsHandler(request).then(result => {
+    expect(result).toEqual({
+      err: Error("TEST ERROR"),
+      result: null
+    });
+  });
 });
