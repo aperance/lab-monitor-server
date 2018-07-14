@@ -37,54 +37,70 @@ server.on("connection", (socket, req) => {
 
   socket.on("message", function incoming(messageString) {
     const inboundMessage = JSON.parse(messageString as string);
-    if (!inboundMessage.type || !inboundMessage.payload) return;
-    log.info(inboundMessage.type + " received");
-
-    switch (inboundMessage.type) {
-      case MessageType.RefreshDevice:
-        engine.refresh(inboundMessage.payload.targets);
-        break;
-
-      case MessageType.DeviceAction:
-        actionHandler(inboundMessage.payload).then(results => {
-          sendToClient(socket, {
-            type: MessageType.DeviceActionResponse,
-            payload: results
-          });
-        });
-        break;
-
-      case MessageType.PsToolsCommand:
-        psToolsHandler(
-          inboundMessage.payload.target,
-          inboundMessage.payload.mode,
-          inboundMessage.payload.cmd
-        )
-          .then(result =>
-            sendToClient(socket, {
-              type: MessageType.PsToolsCommandResponse,
-              payload: { result }
-            })
-          )
-          .catch(err => log.error(err));
-        break;
-
-      default:
-        break;
-    }
+    inboundMessageRouter(socket, inboundMessage);
   });
 });
 
-const sendToClient = (socket: ws, message: Message) => {
-  log.info(message.type + " sent to socket");
-  socket.send(JSON.stringify(message));
+/**
+ *
+ *
+ * @param {ws} socket
+ * @param {Message} outboundMessage
+ */
+const sendToClient = (socket: ws, outboundMessage: Message) => {
+  log.info(outboundMessage.type + " sent to client");
+  socket.send(JSON.stringify(outboundMessage));
 };
 
-const sendToAllClients = (message: Message) =>
+/**
+ *
+ *
+ * @param {Message} outboundMessage
+ */
+const sendToAllClients = (outboundMessage: Message) => {
+  log.info(outboundMessage.type + " sent to all clients");
   server.clients.forEach(client => {
     if (client.readyState === ws.OPEN) {
-      client.send(JSON.stringify(message));
+      client.send(JSON.stringify(outboundMessage));
     }
   });
+};
+
+/**
+ *
+ * @async
+ * @param {ws} socket
+ * @param {Message} inboundMessage
+ * @returns {Promise<void>}
+ */
+const inboundMessageRouter = async (socket: ws, inboundMessage: Message) => {
+  if (!inboundMessage.type || !inboundMessage.payload) return;
+  log.info(inboundMessage.type + " received");
+
+  switch (inboundMessage.type) {
+    case MessageType.RefreshDevice:
+      engine.refresh(inboundMessage.payload.targets);
+      break;
+
+    case MessageType.DeviceAction:
+      const actionResults = await actionHandler(inboundMessage.payload);
+      sendToClient(socket, {
+        type: MessageType.DeviceActionResponse,
+        payload: actionResults
+      });
+      break;
+
+    case MessageType.PsToolsCommand:
+      const psToolsResults = await psToolsHandler(inboundMessage.payload);
+      sendToClient(socket, {
+        type: MessageType.PsToolsCommandResponse,
+        payload: { psToolsResults }
+      });
+      break;
+
+    default:
+      break;
+  }
+};
 
 export { sendToClient, sendToAllClients, Message, MessageType };
