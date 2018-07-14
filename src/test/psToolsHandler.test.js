@@ -17,7 +17,12 @@ const exec = require("child_process").exec;
 test("psExec without error", async () => {
   exec.mockImplementation((str, cb) => cb(null, "(stdout)", "(stderr)"));
   expect.assertions(1);
-  const result = await psToolsHandler("127.0.0.1", "psExec", "(testString)");
+  const request = {
+    target: "127.0.0.1",
+    mode: "psExec",
+    argument: "(testString)"
+  };
+  const result = await psToolsHandler(request);
   expect(result).toEqual(
     "$ C:\\PSTools\\psexec -d -i \\\\127.0.0.1 -u \\(testUser) -p (testPassword) (testString)\r\n(stdout)(stderr)"
   );
@@ -26,7 +31,12 @@ test("psExec without error", async () => {
 test("psKill without error", async () => {
   exec.mockImplementation((str, cb) => cb(null, "(stdout)", "(stderr)"));
   expect.assertions(1);
-  const result = await psToolsHandler("127.0.0.1", "psKill", "(testString)");
+  const request = {
+    target: "127.0.0.1",
+    mode: "psKill",
+    argument: "(testString)"
+  };
+  const result = await psToolsHandler(request);
   expect(result).toEqual(
     "$ C:\\PSTools\\pskill -t \\\\127.0.0.1 -u \\(testUser) -p (testPassword) (testString)\r\n(stdout)(stderr)"
   );
@@ -45,7 +55,12 @@ test("exec returns error", async () => {
   exec.mockImplementation((str, cb) => cb(new Error("TEST ERROR")));
   expect.assertions(1);
   try {
-    const result = await psToolsHandler("127.0.0.1", "psExec", "(testString)");
+    const request = {
+      target: "127.0.0.1",
+      mode: "psExec",
+      argument: "(testString)"
+    };
+    const result = await psToolsHandler(request);
   } catch (err) {
     expect(err).toEqual(new Error("TEST ERROR"));
   }
