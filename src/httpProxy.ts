@@ -3,33 +3,39 @@ import * as httpProxy from "http-proxy";
 import * as querystring from "querystring";
 import { httpProxy as log } from "./logger";
 
-const proxy = httpProxy.createProxyServer({});
 const addressMap: Map<string, string> = new Map();
 
-const server = http.createServer((req, res) => {
-  if (!req.connection.remoteAddress || !req.url) {
-    log.error("Unable to parse request data");
-    return;
-  }
+/**
+ *
+ *
+ * @param {http.IncomingMessage} req
+ * @param {http.ServerResponse} res
+ */
+const proxyHandler = (req: http.IncomingMessage, res: http.ServerResponse) => {
+  try {
+    if (!req.connection.remoteAddress || !req.url)
+      throw new Error("Unable to parse request data");
 
-  const source = req.connection.remoteAddress.replace("::ffff:", "");
-  let destination = querystring.parse(req.url.replace("/?", "")).target;
+    const source = req.connection.remoteAddress.replace("::ffff:", "");
 
-  if (typeof destination !== "string") destination = addressMap.get(source);
-  else addressMap.set(source, destination);
+    let destination = querystring.parse(req.url.replace("/?", "")).target;
 
-  if (destination) {
+    if (typeof destination === "string") addressMap.set(source, destination);
+    else destination = addressMap.get(source);
+
+    if (!destination) throw new Error("No destination address provided");
+
+    proxyServer.web(req, res, { target: `http://${destination}:8001` });
     log.info(`Proxying http from ${source} to ${destination}`);
-    proxy.web(req, res, { target: `http://${destination}:8001` });
-  } else {
-    log.warn(
-      `Error proxying http from ${source}, no destination address provided`
-    );
+  } catch (err) {
+    log.error(err);
+
     res.writeHead(500, { "Content-Type": "text/plain" });
-    res.write("Error: No destination address provided");
+    res.write(err);
     res.end();
   }
-});
+};
 
-server.listen(9000);
+const proxyServer = httpProxy.createProxyServer({});
+const server = http.createServer(proxyHandler).listen(9000);
 log.info("HTTP Proxy listening on port 9000");
