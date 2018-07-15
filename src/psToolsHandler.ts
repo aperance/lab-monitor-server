@@ -9,7 +9,7 @@ const {
 }: { user: string; password: string } = require("../config.json").psTools;
 
 interface Request {
-  [x: string]: string;
+  [x: string]: string | undefined;
 }
 
 interface Response {
@@ -30,9 +30,14 @@ const psToolsHandler = async (request: Request): Promise<Response> => {
     const { target, mode, argument } = request;
     let command: string = "C:\\PSTools\\";
 
+    if (typeof target !== "string")
+      throw Error("Missing or invalid 'target' parameter");
+    if (typeof argument !== "string")
+      throw Error("Missing or invalid 'argument' parameter");
+
     if (mode === "psExec") command += "psexec -d -i ";
     else if (mode === "psKill") command += "pskill -t ";
-    else throw Error("Invalid mode specified.");
+    else throw Error("Missing or invalid 'mode' parameter");
 
     command += `\\\\${target} -u \\${user} -p ${password} ${argument}`;
     const output = await executeCommand(command);
@@ -53,8 +58,9 @@ const psToolsHandler = async (request: Request): Promise<Response> => {
 const executeCommand = (command: string): Promise<string | Error> => {
   log.info("STDIN: " + command);
   return new Promise((resolve, reject) => {
-    exec(command, (err, stdout, stderr) => {
-      if (err) reject(err);
+    exec(command, (err: any, stdout: string, stderr: string) => {
+      /** If error includes exit code, then command was successfull */
+      if (err && typeof err.code !== "number") reject(err);
       else {
         log.info("STDOUT: " + stdout);
         log.info("STDERR: " + stderr);
