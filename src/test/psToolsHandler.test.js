@@ -56,7 +56,7 @@ test("invalid mode", () => {
   };
   return psToolsHandler(request).then(result => {
     expect(result).toEqual({
-      err: Error("Invalid mode specified."),
+      err: Error("Missing or invalid 'mode' parameter"),
       result: null
     });
   });
