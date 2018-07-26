@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
 
     const source = req.connection.remoteAddress.replace("::ffff:", "");
 
-    let destination = querystring.parse(req.url.replace("/?", "")).target;
+    let destination = querystring.parse(req.url.replace(/.*\/\?/, "")).target;
 
     if (typeof destination === "string") addressMap.set(source, destination);
     else destination = addressMap.get(source);
