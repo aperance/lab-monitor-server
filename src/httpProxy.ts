@@ -1,17 +1,17 @@
+/** @module httpProxy */
+
 import * as http from "http";
 import * as httpProxy from "http-proxy";
 import * as querystring from "querystring";
 import { httpProxy as log } from "./logger";
 
 const addressMap: Map<string, string> = new Map();
+const proxyServer = httpProxy.createProxyServer({});
 
 /**
  *
- *
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
  */
-const proxyHandler = (req: http.IncomingMessage, res: http.ServerResponse) => {
+const server = http.createServer((req, res) => {
   try {
     if (!req.connection.remoteAddress || !req.url)
       throw new Error("Unable to parse request data");
@@ -31,11 +31,10 @@ const proxyHandler = (req: http.IncomingMessage, res: http.ServerResponse) => {
     log.error(err);
 
     res.writeHead(500, { "Content-Type": "text/plain" });
-    res.write(err);
+    res.write(err.message);
     res.end();
   }
-};
+});
 
-const proxyServer = httpProxy.createProxyServer({});
-const server = http.createServer(proxyHandler).listen(9000);
+server.listen(9000);
 log.info("HTTP Proxy listening on port 9000");
