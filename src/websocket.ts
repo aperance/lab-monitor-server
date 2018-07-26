@@ -71,7 +71,6 @@ const sendToClient = (socket: ws, outboundMessage: Message) => {
  * @param {Message} outboundMessage
  */
 const sendToAllClients = (outboundMessage: Message) => {
-  log.info(outboundMessage.type + " sent to all clients");
   server.clients.forEach(client => {
     if (client.readyState === ws.OPEN) {
       client.send(JSON.stringify(outboundMessage));
