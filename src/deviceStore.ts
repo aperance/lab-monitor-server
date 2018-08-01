@@ -1,6 +1,6 @@
 /** @module DeviceStore */
 
-import { MessageType, sendToAllClients } from "./websocket";
+import { MessageTypeKeys, sendToAllClients } from "./websocket";
 
 const {
   maxHistory,
@@ -125,7 +125,7 @@ class DeviceStore {
 
     // Emit modified state and modified history via callback.
     sendToAllClients({
-      type: MessageType.DeviceDataUpdate,
+      type: MessageTypeKeys.DeviceDataUpdate,
       payload: { id, state: stateDiff, history: historyDiff }
     });
   }
