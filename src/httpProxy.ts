@@ -8,6 +8,10 @@ import { httpProxy as log } from "./logger";
 const addressMap: Map<string, string> = new Map();
 const proxyServer = httpProxy.createProxyServer({});
 
+proxyServer.on("proxyRes", (proxyRes, req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+});
+
 /**
  *
  */
