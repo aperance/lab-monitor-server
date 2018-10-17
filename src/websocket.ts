@@ -66,6 +66,7 @@ server.on("connection", (socket, req) => {
    * On socket message event, parse message and call inboundMessageRouter.
    */
   socket.on("message", function incoming(inboundString) {
+    // @ts-ignore
     const inboundObject = JSON.parse(inboundString as string) as unknown;
     if (isMessage(inboundObject)) inboundMessageRouter(socket, inboundObject);
   });
