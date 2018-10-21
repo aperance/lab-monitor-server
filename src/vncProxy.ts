@@ -22,7 +22,15 @@ server.on("connection", (socket, req) => {
   });
 
   socket.on("message", data => tcp.write(data));
-  tcp.on("data", data => socket.send(data));
+  tcp.on("data", data =>
+    socket.send(data, err => {
+      if (err) {
+        log.error("WS send error: " + err);
+        tcp.end();
+        socket.close();
+      }
+    })
+  );
 
   /**
    * Disconnection and Error Handling
