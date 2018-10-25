@@ -7,6 +7,8 @@ import engine from "./engine";
 import { websocket as log } from "./logger";
 import psToolsHandler from "./psToolsHandler";
 
+const clientConfig = require("../config.json").client;
+
 /**
  * Interface for messages sent to and received from WebSocket client.
  */
@@ -32,6 +34,7 @@ const isMessage = (inboundObject: any): inboundObject is Message => {
 };
 
 const enum MessageTypeKeys {
+  Configuration = "CONFIGURATION",
   DeviceDataAll = "DEVICE_DATA_ALL",
   DeviceDataUpdate = "DEVICE_DATA_UPDATE",
   RefreshDevice = "REFRESH_DEVICE",
@@ -56,6 +59,11 @@ log.info("WebSocket handler listening on port 4000");
  */
 server.on("connection", (socket, req) => {
   log.info("WebSocket handler connected to client");
+
+  sendToClient(socket, {
+    type: MessageTypeKeys.Configuration,
+    payload: clientConfig
+  });
 
   sendToClient(socket, {
     type: MessageTypeKeys.DeviceDataAll,
