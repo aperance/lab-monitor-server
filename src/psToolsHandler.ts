@@ -1,13 +1,10 @@
 /** @module psToolsHandler */
 
 import { exec } from "child_process";
-import configuration from "./configuration";
+import { getPsToolsConfig } from "./configuration";
 import { psToolsHandler as log } from "./logger";
 
-const {
-  user,
-  password
-}: { user: string; password: string } = configuration.psTools;
+const { user, password } = getPsToolsConfig();
 
 interface Request {
   [x: string]: string | undefined;

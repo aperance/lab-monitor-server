@@ -1,19 +1,11 @@
 /** @module Watcher */
 
 import * as got from "got";
-import configuration from "./configuration";
+import { getWatcherConfig } from "./configuration";
 import deviceStore, { State, Status } from "./deviceStore";
 import { watcher as log } from "./logger";
 
-const {
-  port,
-  path,
-  sequenceKey
-}: {
-  port: number;
-  path: string;
-  sequenceKey: string;
-} = configuration.watcher;
+const { port, path, sequenceKey } = getWatcherConfig();
 
 /**
  * Continuously polls the device at the provided IP address. Received

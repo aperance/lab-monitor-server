@@ -1,15 +1,9 @@
 /** @module DeviceStore */
 
-import configuration from "./configuration";
+import { getDeviceStoreConfig } from "./configuration";
 import { MessageTypeKeys, sendToAllClients } from "./websocket";
 
-const {
-  maxHistory,
-  dateFormat
-}: {
-  maxHistory: number;
-  dateFormat: { [key: string]: string };
-} = configuration.deviceStore;
+const { maxHistory, dateFormat } = getDeviceStoreConfig();
 
 export const enum Status {
   Connected = "CONNECTED",

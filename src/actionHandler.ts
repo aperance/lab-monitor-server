@@ -2,15 +2,10 @@
 
 import * as got from "got";
 import * as querystring from "querystring";
-import configuration from "./configuration";
+import { getActionConfig } from "./configuration";
 import { actionHandler as log } from "./logger";
 
-const actionLookup: {
-  [type: string]: {
-    path: string;
-    parameters: string[];
-  };
-} = configuration.actions;
+const actionLookup = getActionConfig();
 
 interface Request {
   [x: string]: any;

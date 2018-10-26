@@ -1,17 +1,9 @@
 /** @module engine */
 
-import configuration from "./configuration";
+import { getEngineConfig } from "./configuration";
 import Watcher from "./watcher";
 
-const {
-  addressRanges
-}: {
-  addressRanges: Array<{
-    subnet: string;
-    start: number;
-    end: number;
-  }>;
-} = configuration.engine;
+const { addressRanges } = getEngineConfig();
 
 interface WatcherList {
   [ipAddress: string]: Watcher;

@@ -2,7 +2,7 @@
 
 import * as ws from "ws";
 import actionHandler from "./actionHandler";
-import configuration from "./configuration";
+import { configuration } from "./configuration";
 import deviceStore from "./deviceStore";
 import engine from "./engine";
 import { websocket as log } from "./logger";
