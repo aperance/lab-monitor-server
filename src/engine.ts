@@ -5,12 +5,10 @@ import Watcher from "./watcher";
 
 const { addressRanges } = getEngineConfig();
 
-interface WatcherList {
-  [ipAddress: string]: Watcher;
-}
-
 const engine = {
-  watcherList: {} as WatcherList,
+  watcherList: {} as {
+    [ipAddress: string]: Watcher;
+  },
 
   /**
    * Iterates over the ranges of IP addresses specified in the config file.
