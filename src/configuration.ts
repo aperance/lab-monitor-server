@@ -9,11 +9,9 @@ import {
   isWatcherConfig
 } from "./typeGuards";
 
-export const configuration: object = JSON.parse(
-  readFileSync("./config.json", "utf8")
-);
+const fileOutput: unknown = JSON.parse(readFileSync("./config.json", "utf8"));
 
-const config = isConfig(configuration) ? configuration : null;
+const config = isConfig(fileOutput) ? fileOutput : null;
 
 export const getEngineConfig = () => {
   if (!config || !isEngineConfig(config.engine))
