@@ -1,16 +1,18 @@
 const actionHandler = require("../actionHandler.js").default;
 
 jest.mock(
-  "../../config.json",
+  "../configuration.js",
   () => ({
-    actions: {
-      testActionOne: {
-        path: ":9999/path/for/testActionOne",
-        parameters: []
-      },
-      testActionTwo: {
-        path: ":9999/path/for/testActionTwo",
-        parameters: ["parameterX", "parameterY"]
+    default: {
+      actions: {
+        testActionOne: {
+          path: ":9999/path/for/testActionOne",
+          parameters: []
+        },
+        testActionTwo: {
+          path: ":9999/path/for/testActionTwo",
+          parameters: ["parameterX", "parameterY"]
+        }
       }
     }
   }),

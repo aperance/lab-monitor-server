@@ -9,13 +9,15 @@ const mockWatcherInstance = {
 };
 
 jest.mock(
-  "../../config.json",
+  "../configuration.js",
   () => ({
-    engine: {
-      addressRanges: [
-        { subnet: "127.0.1.0", start: 1, end: 3 },
-        { subnet: "127.0.2.0", start: 201, end: 203 }
-      ]
+    default: {
+      engine: {
+        addressRanges: [
+          { subnet: "127.0.1.0", start: 1, end: 3 },
+          { subnet: "127.0.2.0", start: 201, end: 203 }
+        ]
+      }
     }
   }),
   { virtual: true }

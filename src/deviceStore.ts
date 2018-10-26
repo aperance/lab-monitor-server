@@ -1,5 +1,6 @@
 /** @module DeviceStore */
 
+import configuration from "./configuration";
 import { MessageTypeKeys, sendToAllClients } from "./websocket";
 
 const {
@@ -8,7 +9,7 @@ const {
 }: {
   maxHistory: number;
   dateFormat: { [key: string]: string };
-} = require("../config.json").deviceStore;
+} = configuration.deviceStore;
 
 export const enum Status {
   Connected = "CONNECTED",

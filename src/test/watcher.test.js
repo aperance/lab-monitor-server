@@ -8,12 +8,14 @@ jest.mock("../deviceStore.js", () => ({
 }));
 
 jest.mock(
-  "../../config.json",
+  "../configuration.js",
   () => ({
-    watcher: {
-      port: 9999,
-      path: "testPath",
-      sequenceKey: "testSequenceKey"
+    default: {
+      watcher: {
+        port: 9999,
+        path: "testPath",
+        sequenceKey: "testSequenceKey"
+      }
     }
   }),
   { virtual: true }

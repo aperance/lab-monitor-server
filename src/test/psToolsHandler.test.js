@@ -1,11 +1,13 @@
 const psToolsHandler = require("../psToolsHandler.js").default;
 
 jest.mock(
-  "../../config.json",
+  "../configuration.js",
   () => ({
-    psTools: {
-      user: "(testUser)",
-      password: "(testPassword)"
+    default: {
+      psTools: {
+        user: "(testUser)",
+        password: "(testPassword)"
+      }
     }
   }),
   { virtual: true }

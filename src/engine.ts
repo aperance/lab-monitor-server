@@ -1,5 +1,6 @@
 /** @module engine */
 
+import configuration from "./configuration";
 import Watcher from "./watcher";
 
 const {
@@ -10,7 +11,7 @@ const {
     start: number;
     end: number;
   }>;
-} = require("../config.json").engine;
+} = configuration.engine;
 
 interface WatcherList {
   [ipAddress: string]: Watcher;
@@ -24,7 +25,7 @@ const engine = {
    * Spawns a watcher instance for each and stores reference in watcherList.
    */
   start() {
-    console.log("Starting engine...");
+    console.log("Engine Started");
     addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         const ipAddress = subnet.slice(0, -1) + i;

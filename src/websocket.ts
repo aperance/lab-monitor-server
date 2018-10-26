@@ -2,12 +2,11 @@
 
 import * as ws from "ws";
 import actionHandler from "./actionHandler";
+import configuration from "./configuration";
 import deviceStore from "./deviceStore";
 import engine from "./engine";
 import { websocket as log } from "./logger";
 import psToolsHandler from "./psToolsHandler";
-
-const clientConfig = require("../config.json").client;
 
 /**
  * Interface for messages sent to and received from WebSocket client.
@@ -62,7 +61,7 @@ server.on("connection", (socket, req) => {
 
   sendToClient(socket, {
     type: MessageTypeKeys.Configuration,
-    payload: clientConfig
+    payload: configuration.client
   });
 
   sendToClient(socket, {

@@ -3,14 +3,16 @@ jest.mock("../websocket.js", () => ({
 }));
 
 jest.mock(
-  "../../config.json",
+  "../configuration.js",
   () => ({
-    deviceStore: {
-      maxHistory: 5,
-      dateFormat: {
-        weekday: "short",
-        month: "numeric",
-        day: "numeric"
+    default: {
+      deviceStore: {
+        maxHistory: 5,
+        dateFormat: {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric"
+        }
       }
     }
   }),

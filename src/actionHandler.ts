@@ -2,6 +2,7 @@
 
 import * as got from "got";
 import * as querystring from "querystring";
+import configuration from "./configuration";
 import { actionHandler as log } from "./logger";
 
 const actionLookup: {
@@ -9,7 +10,7 @@ const actionLookup: {
     path: string;
     parameters: string[];
   };
-} = require("../config.json").actions;
+} = configuration.actions;
 
 interface Request {
   [x: string]: any;

@@ -1,6 +1,7 @@
 /** @module Watcher */
 
 import * as got from "got";
+import configuration from "./configuration";
 import deviceStore, { State, Status } from "./deviceStore";
 import { watcher as log } from "./logger";
 
@@ -12,7 +13,7 @@ const {
   port: number;
   path: string;
   sequenceKey: string;
-} = require("../config.json").watcher;
+} = configuration.watcher;
 
 /**
  * Continuously polls the device at the provided IP address. Received
