@@ -1,110 +1,52 @@
-import * as Ajv from "ajv";
 import { readFileSync } from "fs";
+import {
+  isActionConfig,
+  isClientConfig,
+  isConfig,
+  isDeviceStoreConfig,
+  isEngineConfig,
+  isPsToolsConfig,
+  isWatcherConfig
+} from "./typeGuards";
 
-export interface DeviceStoreConfig {
-  maxHistory: number;
-  dateFormat: { [key: string]: string };
-}
+export const configuration: object = JSON.parse(
+  readFileSync("./config.json", "utf8")
+);
 
-export interface ActionConfig {
-  [type: string]: {
-    path: string;
-    parameters: string[];
-  };
-}
+const config = isConfig(configuration) ? configuration : null;
 
-export interface EngineConfig {
-  addressRanges: Array<{
-    subnet: string;
-    start: number;
-    end: number;
-  }>;
-}
-
-export interface PsToolsConfig {
-  user: string;
-  password: string;
-}
-
-export interface WatcherConfig {
-  port: number;
-  path: string;
-  sequenceKey: string;
-}
-
-export const configuration = JSON.parse(readFileSync("./config.json", "utf8"));
-
-export const getEngineConfig = (): EngineConfig => {
-  const schema = {
-    properties: {
-      addressRanges: {
-        type: "array"
-      }
-    },
-    required: ["addressRanges"],
-    additionalProperties: false
-  };
-  return validate(schema, configuration.engine);
+export const getEngineConfig = () => {
+  if (!config || !isEngineConfig(config.engine))
+    throw Error("Invalid Engine Configuration");
+  return config.engine;
 };
 
-export const getWatcherConfig = (): WatcherConfig => {
-  const schema = {
-    properties: {
-      port: { type: "number" },
-      path: { type: "string" },
-      sequenceKey: { type: "string" },
-      maxRetries: { type: "number" }
-    },
-    required: ["port", "path", "sequenceKey", "maxRetries"],
-    additionalProperties: false
-  };
-  return validate(schema, configuration.watcher);
+export const getWatcherConfig = () => {
+  if (!config || !isWatcherConfig(config.watcher))
+    throw Error("Invalid Watcher Configuration");
+  return config.watcher;
 };
 
-export const getDeviceStoreConfig = (): DeviceStoreConfig => {
-  const schema = {
-    properties: {
-      maxHistory: {
-        type: "number"
-      },
-      dateFormat: {
-        type: "object"
-      }
-    },
-    required: ["maxHistory", "dateFormat"],
-    additionalProperties: false
-  };
-  return validate(schema, configuration.deviceStore);
+export const getDeviceStoreConfig = () => {
+  if (!config || !isDeviceStoreConfig(config.deviceStore))
+    throw Error("Invalid Device Store Configuration");
+  return config.deviceStore;
 };
 
-export const getActionConfig = (): ActionConfig => {
-  const schema = {
-    properties: {},
-    required: [],
-    additionalProperties: true
-  };
-  return validate(schema, configuration.actions);
+export const getActionConfig = () => {
+  if (!config || !isActionConfig(config.actions))
+    throw Error("Invalid Action Configuration");
+  return config.actions;
 };
 
-export const getPsToolsConfig = (): PsToolsConfig => {
-  const schema = {
-    properties: {
-      user: {
-        type: "string"
-      },
-      password: {
-        type: "string"
-      }
-    },
-    required: ["user", "password"],
-    additionalProperties: false
-  };
-  return validate(schema, configuration.psTools);
+export const getPsToolsConfig = () => {
+  if (!config || !isPsToolsConfig(config.psTools))
+    throw Error("Invalid PsTools Configuration");
+  return config.psTools;
 };
 
-const validate = (schema: any, data: any) => {
-  const ajv = new Ajv();
-  const isValid = ajv.validate(schema, data);
-  if (isValid) return data;
-  else throw new Error(ajv.errorsText());
+export const getClientConfig = () => {
+  if (!config || !isClientConfig(config.client))
+    throw Error("Invalid Client Configuration");
+  return config.client;
 };

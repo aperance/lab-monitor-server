@@ -2,7 +2,7 @@
 
 import * as ws from "ws";
 import actionHandler from "./actionHandler";
-import { configuration } from "./configuration";
+import { getClientConfig } from "./configuration";
 import deviceStore from "./deviceStore";
 import engine from "./engine";
 import { websocket as log } from "./logger";
@@ -61,7 +61,7 @@ server.on("connection", (socket, req) => {
 
   sendToClient(socket, {
     type: MessageTypeKeys.Configuration,
-    payload: configuration.client
+    payload: getClientConfig()
   });
 
   sendToClient(socket, {
