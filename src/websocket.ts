@@ -7,43 +7,8 @@ import deviceStore from "./deviceStore";
 import engine from "./engine";
 import { websocket as log } from "./logger";
 import psToolsHandler from "./psToolsHandler";
-
-/**
- * Interface for messages sent to and received from WebSocket client.
- */
-interface Message {
-  type: MessageTypeKeys;
-  payload: {
-    [key: string]: any;
-  };
-}
-
-/**
- * Type guard for Message interface
- *
- * @param {any} inboundObject
- * @returns
- */
-const isMessage = (inboundObject: any): inboundObject is Message => {
-  return (
-    typeof inboundObject.type === "string" &&
-    typeof inboundObject.payload === "object" &&
-    inboundObject.payload !== null
-  );
-};
-
-const enum MessageTypeKeys {
-  Configuration = "CONFIGURATION",
-  DeviceDataAll = "DEVICE_DATA_ALL",
-  DeviceDataUpdate = "DEVICE_DATA_UPDATE",
-  RefreshDevice = "REFRESH_DEVICE",
-  DeviceAction = "DEVICE_ACTION",
-  DeviceActionResponse = "DEVICE_ACTION_RESPONSE",
-  PsToolsCommand = "PSTOOLS_COMMAND",
-  PsToolsCommandResponse = "PSTOOLS_COMMAND_RESPONSE",
-  UserDialog = "USER_DIALOG",
-  Error = "ERROR"
-}
+import { isWsMessage } from "./typeGuards";
+import { WsMessage, WsMessageTypeKeys } from "./types";
 
 /**
  * Create new WebSocket server on port 4000.
@@ -60,12 +25,12 @@ server.on("connection", (socket, req) => {
   log.info("WebSocket handler connected to client");
 
   sendToClient(socket, {
-    type: MessageTypeKeys.Configuration,
+    type: WsMessageTypeKeys.Configuration,
     payload: getClientConfig()
   });
 
   sendToClient(socket, {
-    type: MessageTypeKeys.DeviceDataAll,
+    type: WsMessageTypeKeys.DeviceDataAll,
     payload: deviceStore.getAccumulatedRecords()
   });
 
@@ -75,7 +40,7 @@ server.on("connection", (socket, req) => {
   socket.on("message", function incoming(inboundString) {
     // @ts-ignore
     const inboundObject = JSON.parse(inboundString as string) as unknown;
-    if (isMessage(inboundObject)) inboundMessageRouter(socket, inboundObject);
+    if (isWsMessage(inboundObject)) inboundMessageRouter(socket, inboundObject);
   });
 });
 
@@ -83,9 +48,9 @@ server.on("connection", (socket, req) => {
  * Send message to client on the specifed socket.
  *
  * @param {ws} socket
- * @param {Message} outboundMessage
+ * @param {WsMessage} outboundMessage
  */
-const sendToClient = (socket: ws, outboundMessage: Message) => {
+const sendToClient = (socket: ws, outboundMessage: WsMessage) => {
   log.info(outboundMessage.type + " sent to client");
   socket.send(JSON.stringify(outboundMessage));
 };
@@ -93,9 +58,9 @@ const sendToClient = (socket: ws, outboundMessage: Message) => {
 /**
  * Send message to all clients connected to server.
  *
- * @param {Message} outboundMessage
+ * @param {WsMessage} outboundMessage
  */
-const sendToAllClients = (outboundMessage: Message) => {
+const sendToAllClients = (outboundMessage: WsMessage) => {
   server.clients.forEach(client => {
     if (client.readyState === ws.OPEN) {
       client.send(JSON.stringify(outboundMessage));
@@ -109,29 +74,29 @@ const sendToAllClients = (outboundMessage: Message) => {
  *
  * @async
  * @param {ws} socket
- * @param {Message} inboundMessage
+ * @param {WsMessage} inboundMessage
  * @returns {Promise<void>}
  */
-const inboundMessageRouter = async (socket: ws, inboundMessage: Message) => {
+const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
   log.info(inboundMessage.type + " received");
 
   switch (inboundMessage.type) {
-    case MessageTypeKeys.RefreshDevice:
+    case WsMessageTypeKeys.RefreshDevice:
       engine.refresh(inboundMessage.payload.targets);
       break;
 
-    case MessageTypeKeys.DeviceAction:
+    case WsMessageTypeKeys.DeviceAction:
       const actionResponse = await actionHandler(inboundMessage.payload);
       sendToClient(socket, {
-        type: MessageTypeKeys.DeviceActionResponse,
+        type: WsMessageTypeKeys.DeviceActionResponse,
         payload: actionResponse
       });
       break;
 
-    case MessageTypeKeys.PsToolsCommand:
+    case WsMessageTypeKeys.PsToolsCommand:
       const psToolsResponse = await psToolsHandler(inboundMessage.payload);
       sendToClient(socket, {
-        type: MessageTypeKeys.PsToolsCommandResponse,
+        type: WsMessageTypeKeys.PsToolsCommandResponse,
         payload: psToolsResponse
       });
       break;
@@ -141,4 +106,4 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: Message) => {
   }
 };
 
-export { sendToClient, sendToAllClients, Message, MessageTypeKeys };
+export { sendToClient, sendToAllClients };

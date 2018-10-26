@@ -3,27 +3,21 @@
 import { exec } from "child_process";
 import { getPsToolsConfig } from "./configuration";
 import { psToolsHandler as log } from "./logger";
+import { PsToolsRequest, PsToolsResponse } from "./types";
 
 const { user, password } = getPsToolsConfig();
-
-interface Request {
-  [x: string]: string | undefined;
-}
-
-interface Response {
-  err: Error | null;
-  result: string | null;
-}
 
 /**
  * Utilizes PSTools (as child process) to run the provided command on the
  * target device. Errors are caught and included in response to client.
  *
  * @async
- * @param {Request} request
- * @returns {Promise<Response>}
+ * @param {PsToolsRequest} request
+ * @returns {Promise<PsToolsResponse>}
  */
-const psToolsHandler = async (request: Request): Promise<Response> => {
+const psToolsHandler = async (
+  request: PsToolsRequest
+): Promise<PsToolsResponse> => {
   try {
     const { target, mode, argument } = request;
     let command: string = "C:\\PSTools\\";

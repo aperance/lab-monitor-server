@@ -1,44 +1,19 @@
 /** @module DeviceStore */
 
 import { getDeviceStoreConfig } from "./configuration";
-import { MessageTypeKeys, sendToAllClients } from "./websocket";
+import {
+  AccumulatedRecords,
+  DeviceRecord,
+  History,
+  HistoryDiff,
+  State,
+  StateDiff,
+  Status,
+  WsMessageTypeKeys
+} from "./types";
+import { sendToAllClients } from "./websocket";
 
 const { maxHistory, dateFormat } = getDeviceStoreConfig();
-
-export const enum Status {
-  Connected = "CONNECTED",
-  Retry = "RETRY",
-  Disconnected = "DISCONNECTED",
-  Inactive = "INACTIVE"
-}
-
-export interface State {
-  [key: string]: string;
-}
-
-interface History {
-  [key: string]: Array<[string, string | null]>;
-}
-
-interface StateDiff {
-  [key: string]: string | null;
-}
-
-interface HistoryDiff extends Array<[string, [string, string | null]]> {}
-
-interface DeviceRecord {
-  state: State;
-  history: History;
-}
-
-interface AccumulatedRecords {
-  state: {
-    [key: string]: State;
-  };
-  history: {
-    [key: string]: History;
-  };
-}
 
 /**
  * The deviceStore class stores Map of information collectedfrom the polling
@@ -120,7 +95,7 @@ class DeviceStore {
 
     // Emit modified state and modified history via callback.
     sendToAllClients({
-      type: MessageTypeKeys.DeviceDataUpdate,
+      type: WsMessageTypeKeys.DeviceDataUpdate,
       payload: { id, state: stateDiff, history: historyDiff }
     });
   }

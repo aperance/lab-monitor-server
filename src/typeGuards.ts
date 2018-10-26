@@ -5,7 +5,8 @@ import {
   DeviceStoreConfig,
   EngineConfig,
   PsToolsConfig,
-  WatcherConfig
+  WatcherConfig,
+  WsMessage
 } from "./types";
 
 const ajv = new Ajv();
@@ -86,4 +87,18 @@ export const isWatcherConfig = (data: unknown): data is WatcherConfig => {
 
 export const isClientConfig = (data: unknown): data is any => {
   return true;
+};
+
+/**
+ * Type guard for Message interface
+ *
+ * @param {any} inboundObject
+ * @returns
+ */
+export const isWsMessage = (inboundObject: any): inboundObject is WsMessage => {
+  return (
+    typeof inboundObject.type === "string" &&
+    typeof inboundObject.payload === "object" &&
+    inboundObject.payload !== null
+  );
 };

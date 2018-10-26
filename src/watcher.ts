@@ -2,8 +2,9 @@
 
 import * as got from "got";
 import { getWatcherConfig } from "./configuration";
-import deviceStore, { State, Status } from "./deviceStore";
+import deviceStore from "./deviceStore";
 import { watcher as log } from "./logger";
+import { State, Status } from "./types";
 
 const { port, path, sequenceKey } = getWatcherConfig();
 
