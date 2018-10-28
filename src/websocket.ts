@@ -85,6 +85,10 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
       engine.refresh(inboundMessage.payload.targets);
       break;
 
+    case WsMessageTypeKeys.ClearDevice:
+      deviceStore.clear(inboundMessage.payload.targets);
+      break;
+
     case WsMessageTypeKeys.DeviceAction:
       const actionResponse = await actionHandler(inboundMessage.payload);
       sendToClient(socket, {

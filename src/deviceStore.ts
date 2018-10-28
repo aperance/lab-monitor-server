@@ -101,6 +101,22 @@ class DeviceStore {
   }
 
   /**
+   * Removes record for given ID from Map. Sends null as update to trigger local clear.
+   * @public
+   * @param {string[]} ids
+   */
+  public clear(ids: string[]): void {
+    ids.forEach(id => {
+      const result = this.deviceData.delete(id);
+      if (result)
+        sendToAllClients({
+          type: WsMessageTypeKeys.DeviceDataUpdate,
+          payload: { id, state: null, history: null }
+        });
+    });
+  }
+
+  /**
    * Generate modified state object by adding latest values to modified
    * keys list.
    * @private

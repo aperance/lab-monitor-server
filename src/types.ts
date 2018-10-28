@@ -87,6 +87,7 @@ export const enum WsMessageTypeKeys {
   DeviceDataAll = "DEVICE_DATA_ALL",
   DeviceDataUpdate = "DEVICE_DATA_UPDATE",
   RefreshDevice = "REFRESH_DEVICE",
+  ClearDevice = "CLEAR_DEVICE",
   DeviceAction = "DEVICE_ACTION",
   DeviceActionResponse = "DEVICE_ACTION_RESPONSE",
   PsToolsCommand = "PSTOOLS_COMMAND",
