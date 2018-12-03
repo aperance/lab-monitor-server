@@ -42,9 +42,3 @@ export const getPsToolsConfig = () => {
     throw Error("Invalid PsTools Configuration");
   return config.psTools;
 };
-
-export const getClientConfig = () => {
-  if (!config || !isClientConfig(config.client))
-    throw Error("Invalid Client Configuration");
-  return config.client;
-};

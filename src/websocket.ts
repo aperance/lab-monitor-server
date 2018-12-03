@@ -2,7 +2,6 @@
 
 import * as ws from "ws";
 import actionHandler from "./actionHandler";
-import { getClientConfig } from "./configuration";
 import deviceStore from "./deviceStore";
 import engine from "./engine";
 import { websocket as log } from "./logger";
@@ -23,11 +22,6 @@ log.info("WebSocket handler listening on port 4000");
  */
 server.on("connection", (socket, req) => {
   log.info("WebSocket handler connected to client");
-
-  sendToClient(socket, {
-    type: WsMessageTypeKeys.Configuration,
-    payload: getClientConfig()
-  });
 
   sendToClient(socket, {
     type: WsMessageTypeKeys.DeviceDataAll,

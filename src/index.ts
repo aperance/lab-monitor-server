@@ -11,8 +11,6 @@ import * as http from "http";
 
 const app = express();
 
-app.get("/", (req, res) => res.send("GET request to the homepage"));
-
 app.get("/refresh", (req, res) => {
   engine.refresh();
   res.send("OK");
@@ -25,8 +23,16 @@ app.get("/gc", (req, res) => {
   } else res.send("You must run program with 'node --expose-gc index.js'");
 });
 
+app.use(
+  express.static("public", {
+    setHeaders: (res, path, stat) => {
+      res.set("Access-Control-Allow-Origin", "*");
+    }
+  })
+);
+
 const server = http.createServer(app);
-server.listen(8080);
+server.listen(80);
 
 // /* Load Demo Store Data */
 // const testData = require("../testData.json");
