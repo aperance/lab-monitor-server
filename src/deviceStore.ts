@@ -95,22 +95,24 @@ class DeviceStore {
 
     // Emit modified state and modified history via callback.
     sendToAllClients({
-      type: WsMessageTypeKeys.DeviceDataUpdate,
+      type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
       payload: { id, state: stateDiff, history: historyDiff }
     });
   }
 
   /**
    * Removes record for given ID from Map. Sends null as update to trigger local clear.
+   * Clears all records in deviceData ma[] if specific list not provided.
    * @public
    * @param {string[]} ids
    */
-  public clear(ids: string[]): void {
+  public clear(ids?: string[]): void {
+    if (!ids) ids = [...this.deviceData.keys()];
     ids.forEach(id => {
       const result = this.deviceData.delete(id);
       if (result)
         sendToAllClients({
-          type: WsMessageTypeKeys.DeviceDataUpdate,
+          type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
           payload: { id, state: null, history: null }
         });
     });

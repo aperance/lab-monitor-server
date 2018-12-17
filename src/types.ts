@@ -83,17 +83,17 @@ export interface AccumulatedRecords {
  * Websocket Types
  */
 export const enum WsMessageTypeKeys {
-  Configuration = "CONFIGURATION",
-  DeviceDataAll = "DEVICE_DATA_ALL",
-  DeviceDataUpdate = "DEVICE_DATA_UPDATE",
-  RefreshDevice = "REFRESH_DEVICE",
-  ClearDevice = "CLEAR_DEVICE",
-  DeviceAction = "DEVICE_ACTION",
-  DeviceActionResponse = "DEVICE_ACTION_RESPONSE",
-  PsToolsCommand = "PSTOOLS_COMMAND",
-  PsToolsCommandResponse = "PSTOOLS_COMMAND_RESPONSE",
-  UserDialog = "USER_DIALOG",
-  Error = "ERROR"
+  CONFIGURATION = "CONFIGURATION",
+  DEVICE_DATA_ALL = "DEVICE_DATA_ALL",
+  DEVICE_DATA_UPDATE = "DEVICE_DATA_UPDATE",
+  REFRESH_DEVICE = "REFRESH_DEVICE",
+  CLEAR_DEVICE = "CLEAR_DEVICE",
+  DEVICE_ACTION = "DEVICE_ACTION",
+  DEVICE_ACTION_RESPONSE = "DEVICE_ACTION_RESPONSE",
+  PSTOOLS_COMMAND = "PSTOOLS_COMMAND",
+  PSTOOLS_COMMAND_RESPONSE = "PSTOOLS_COMMAND_RESPONSE",
+  USER_DIALOG = "USER_DIALOG",
+  ERROR = "ERROR"
 }
 
 export interface WsPayload {

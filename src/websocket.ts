@@ -24,7 +24,7 @@ server.on("connection", (socket, req) => {
   log.info("WebSocket handler connected to client");
 
   sendToClient(socket, {
-    type: WsMessageTypeKeys.DeviceDataAll,
+    type: WsMessageTypeKeys.DEVICE_DATA_ALL,
     payload: deviceStore.getAccumulatedRecords()
   });
 
@@ -75,26 +75,27 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
   log.info(inboundMessage.type + " received");
 
   switch (inboundMessage.type) {
-    case WsMessageTypeKeys.RefreshDevice:
+    case WsMessageTypeKeys.REFRESH_DEVICE:
       engine.refresh(inboundMessage.payload.targets);
       break;
 
-    case WsMessageTypeKeys.ClearDevice:
+    case WsMessageTypeKeys.CLEAR_DEVICE:
       deviceStore.clear(inboundMessage.payload.targets);
+      engine.refresh(inboundMessage.payload.targets);
       break;
 
-    case WsMessageTypeKeys.DeviceAction:
+    case WsMessageTypeKeys.DEVICE_ACTION:
       const actionResponse = await actionHandler(inboundMessage.payload);
       sendToClient(socket, {
-        type: WsMessageTypeKeys.DeviceActionResponse,
+        type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
         payload: actionResponse
       });
       break;
 
-    case WsMessageTypeKeys.PsToolsCommand:
+    case WsMessageTypeKeys.PSTOOLS_COMMAND:
       const psToolsResponse = await psToolsHandler(inboundMessage.payload);
       sendToClient(socket, {
-        type: WsMessageTypeKeys.PsToolsCommandResponse,
+        type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
         payload: psToolsResponse
       });
       break;

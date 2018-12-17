@@ -15,6 +15,7 @@ const engine = {
    * Spawns a watcher instance for each and stores reference in watcherList.
    */
   start() {
+    // tslint:disable-next-line:no-console
     console.log("Engine Started");
     addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
