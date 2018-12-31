@@ -7,7 +7,7 @@ import engine from "./engine";
 import { websocket as log } from "./logger";
 import psToolsHandler from "./psToolsHandler";
 import { isWsMessage } from "./typeGuards";
-import { WsMessage, WsMessageTypeKeys } from "./types";
+import { PsToolsResponse, WsMessage, WsMessageTypeKeys } from "./types";
 
 /**
  * Create new WebSocket server on port 4000.
@@ -93,10 +93,11 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
       break;
 
     case WsMessageTypeKeys.PSTOOLS_COMMAND:
-      const psToolsResponse = await psToolsHandler(inboundMessage.payload);
-      sendToClient(socket, {
-        type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
-        payload: psToolsResponse
+      psToolsHandler(inboundMessage.payload, payload => {
+        sendToClient(socket, {
+          type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
+          payload
+        });
       });
       break;
 

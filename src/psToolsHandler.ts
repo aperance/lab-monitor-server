@@ -1,8 +1,7 @@
 /** @module psToolsHandler */
 
-import { exec, execFile } from "child_process";
+import { spawn } from "child_process";
 import { getPsToolsConfig } from "./configuration";
-import { psToolsHandler as log } from "./logger";
 import { PsToolsRequest, PsToolsResponse } from "./types";
 
 const { user, password } = getPsToolsConfig();
@@ -11,64 +10,56 @@ const { user, password } = getPsToolsConfig();
  * Utilizes PSTools (as child process) to run the provided command on the
  * target device. Errors are caught and included in response to client.
  *
- * @async
  * @param {PsToolsRequest} request
- * @returns {Promise<PsToolsResponse>}
+ * @param {(PsToolsResponse) => void} sendResponse
  */
-const psToolsHandler = async (
-  request: PsToolsRequest
-): Promise<PsToolsResponse> => {
+const psToolsHandler = (
+  request: PsToolsRequest,
+  sendResponse: (payload: PsToolsResponse) => void
+) => {
   try {
     const { target, mode, argument } = request;
 
-    if (typeof target !== "string")
-      throw Error("Missing or invalid 'target' parameter");
-    if (typeof argument !== "string")
-      throw Error("Missing or invalid 'argument' parameter");
+    if (typeof target !== "string" || typeof argument !== "string")
+      throw Error(`Missing or invalid parameters: ${JSON.stringify(request)}`);
 
-    const args = [`\\\\${target}`, `-u \\${user}`, `-p ${password}`, argument];
-    if (mode === "psExec") args.unshift("-d -i");
-    else if (mode === "psKill") args.unshift("-t");
-    else throw Error("Missing or invalid 'mode' parameter");
-    const output = await executeCommand(mode, args);
+    let args = `\\\\${target} -u \\${user} -p ${password} ${argument}`;
 
-    const command = `\\\\${target} -u \\${user} -p ${password} ${argument}`;
-    return { err: null, result: "$ " + command + "\r\n" + output };
-  } catch (err) {
-    log.error(err);
-    return { err, result: null };
-  }
-};
+    if (mode === "psExec") args = "-d -i " + args;
+    else if (mode === "psKill") args = "-t " + args;
+    else
+      throw Error(`Missing or invalid parameters: ${JSON.stringify(request)}`);
 
-/**
- * Executes PsTools as child process. Returns promise that resolves with
- * output string received from target device, or rejects with error.
- *
- * @param {string} command
- * @returns {Promise<string | Error>}
- */
-const executeCommand = (
-  command: string,
-  args: string[]
-): Promise<string | Error> => {
-  log.info("STDIN: " + command);
-  return new Promise((resolve, reject) => {
-    execFile(
-      command,
-      args,
-      // @ts-ignore
-      { cwd: "C:\\PSTools\\", shell: true },
-      (err: any, stdout: string, stderr: string) => {
-        /** If error includes exit code, then command was successfull */
-        if (err && typeof err.code !== "number") reject(err);
-        else {
-          log.info("STDOUT: " + stdout);
-          log.info("STDERR: " + stderr);
-          resolve(stdout + stderr);
-        }
-      }
+    const process = spawn(mode, [args], { cwd: "C:\\PSTools\\", shell: true });
+
+    sendResponse({
+      err: null,
+      result: `$ C:\\PSTools\\${mode} ${args}\r\n`
+    });
+
+    process.on("error", err => {
+      throw err;
+    });
+
+    process.stdout.on("data", data =>
+      sendResponse({
+        err: null,
+        result: data.toString()
+      })
     );
-  });
+
+    process.stderr.on("data", data =>
+      sendResponse({
+        err: null,
+        result: data.toString().replace(/\.{3}/g, "...\r\n")
+      })
+    );
+  } catch (err) {
+    sendResponse({
+      err,
+      result: "Error running PsTools command. See console for details."
+    });
+  }
 };
 
 export default psToolsHandler;
