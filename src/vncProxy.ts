@@ -21,7 +21,7 @@ server.on("connection", (socket, req) => {
     log.info("VNC proxy established");
   });
 
-  socket.on("message", data => tcp.write(data));
+  socket.on("message", data => tcp.write(data as string));
   tcp.on("data", data =>
     socket.send(data, err => {
       if (err) {
