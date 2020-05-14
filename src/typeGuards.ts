@@ -27,6 +27,8 @@ export const isActionConfig = (data: unknown): data is ActionConfig => {
 export const isDeviceStoreConfig = (
   data: unknown
 ): data is DeviceStoreConfig => {
+  if (typeof data === "undefined") return false;
+
   const schema = {
     properties: {
       maxHistory: {
@@ -43,6 +45,8 @@ export const isDeviceStoreConfig = (
 };
 
 export const isEngineConfig = (data: unknown): data is EngineConfig => {
+  if (typeof data === "undefined") return false;
+
   const schema = {
     properties: {
       addressRanges: {
@@ -56,6 +60,8 @@ export const isEngineConfig = (data: unknown): data is EngineConfig => {
 };
 
 export const isPsToolsConfig = (data: unknown): data is PsToolsConfig => {
+  if (typeof data === "undefined") return false;
+
   const schema = {
     properties: {
       user: {
@@ -72,12 +78,14 @@ export const isPsToolsConfig = (data: unknown): data is PsToolsConfig => {
 };
 
 export const isWatcherConfig = (data: unknown): data is WatcherConfig => {
+  if (typeof data === "undefined") return false;
+
   const schema = {
     properties: {
-      port: { type: "number" },
-      path: { type: "string" },
-      sequenceKey: { type: "string" },
-      maxRetries: { type: "number" }
+      port: {type: "number"},
+      path: {type: "string"},
+      sequenceKey: {type: "string"},
+      maxRetries: {type: "number"}
     },
     required: ["port", "path", "sequenceKey", "maxRetries"],
     additionalProperties: false
