@@ -2,17 +2,17 @@
  * Configuration Types
  */
 export interface Config {
+  demoMode: boolean;
   deviceStore: unknown;
   engine: unknown;
   actions: unknown;
   psTools: unknown;
   watcher: unknown;
-  client: any;
 }
 
 export interface DeviceStoreConfig {
   maxHistory: number;
-  dateFormat: { [key: string]: string };
+  dateFormat: {[key: string]: string};
 }
 
 export interface ActionConfig {
@@ -123,7 +123,7 @@ export interface PsToolsResponse {
 export interface ActionRequest {
   targets: string[];
   type: string;
-  parameters?: { [key: string]: any };
+  parameters?: {[key: string]: any};
 }
 
 export interface ActionResult {

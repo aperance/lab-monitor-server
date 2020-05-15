@@ -1,6 +1,6 @@
 /** @module DeviceStore */
 
-import { getDeviceStoreConfig } from "./configuration";
+import {getDeviceStoreConfig, isDemoMode} from "./configuration";
 import {
   AccumulatedRecords,
   DeviceRecord,
@@ -11,9 +11,9 @@ import {
   Status,
   WsMessageTypeKeys
 } from "./types";
-import { sendToAllClients } from "./websocket";
+import {sendToAllClients} from "./websocket";
 
-const { maxHistory, dateFormat } = getDeviceStoreConfig();
+const {maxHistory, dateFormat} = getDeviceStoreConfig();
 
 /**
  * The deviceStore class stores Map of information collectedfrom the polling
@@ -31,7 +31,12 @@ class DeviceStore {
    * Creates an instance of DeviceStore.
    */
   constructor() {
-    this.deviceData = new Map();
+    if (!isDemoMode) this.deviceData = new Map();
+    else {
+      const testData = require("../testData.json");
+      this.deviceData = new Map(Object.entries(testData));
+      console.log(this.deviceData);
+    }
   }
 
   /**
@@ -50,7 +55,7 @@ class DeviceStore {
         accumulatedRecords.history[id] = deviceRecord.history;
         return accumulatedRecords;
       },
-      { state: {}, history: {} }
+      {state: {}, history: {}}
     );
   }
 
@@ -76,27 +81,27 @@ class DeviceStore {
     if (status !== Status.Connected && !this.deviceData.has(id)) return;
 
     /** Get previous device record from Map for given id */
-    const current = this.deviceData.get(id) || { state: {}, history: {} };
+    const current = this.deviceData.get(id) || {state: {}, history: {}};
 
     if (receivedState) {
-      nextState = { ...receivedState, status, timestamp: this.timestamp };
+      nextState = {...receivedState, status, timestamp: this.timestamp};
       stateDiff = this.reduceStateToModifiedOnly(current.state, nextState);
       historyDiff = this.mapStateDiffToHistoryDiff(stateDiff);
       nextHistory = this.mergeDiffIntoHistory(current.history, historyDiff);
     } else {
-      nextState = { ...current.state, status };
-      stateDiff = { status };
+      nextState = {...current.state, status};
+      stateDiff = {status};
       historyDiff = [];
       nextHistory = current.history;
     }
 
     // Save latest state and updated history objects to Map.
-    this.deviceData.set(id, { state: nextState, history: nextHistory });
+    this.deviceData.set(id, {state: nextState, history: nextHistory});
 
     // Emit modified state and modified history via callback.
     sendToAllClients({
       type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
-      payload: { id, state: stateDiff, history: historyDiff }
+      payload: {id, state: stateDiff, history: historyDiff}
     });
   }
 
@@ -113,7 +118,7 @@ class DeviceStore {
       if (result)
         sendToAllClients({
           type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
-          payload: { id, state: null, history: null }
+          payload: {id, state: null, history: null}
         });
     });
   }
@@ -127,15 +132,12 @@ class DeviceStore {
    * @returns {StateDiff}
    */
   private reduceStateToModifiedOnly(prevState: State, newState: State) {
-    return Object.keys({ ...prevState, ...newState })
+    return Object.keys({...prevState, ...newState})
       .filter(key => prevState[key] !== newState[key])
-      .reduce(
-        (stateAcc, propertyKey) => {
-          stateAcc[propertyKey] = newState[propertyKey] || null;
-          return stateAcc;
-        },
-        {} as StateDiff
-      );
+      .reduce((stateAcc, propertyKey) => {
+        stateAcc[propertyKey] = newState[propertyKey] || null;
+        return stateAcc;
+      }, {} as StateDiff);
   }
 
   /**
@@ -150,11 +152,9 @@ class DeviceStore {
       Object.entries(stateDiff)
         // Exclude timestamp and status from being recorded in history
         .filter(([key, value]) => key !== "timestamp" && key !== "status")
-        .map(
-          ([key, value]): [string, [string, string | null]] => {
-            return [key, [this.timestamp, value]];
-          }
-        )
+        .map(([key, value]): [string, [string, string | null]] => {
+          return [key, [this.timestamp, value]];
+        })
     );
   }
 
@@ -177,7 +177,7 @@ class DeviceStore {
         while (history[key].length > maxHistory) history[key].pop();
         return history;
       },
-      { ...prevHistory }
+      {...prevHistory}
     );
   }
 

@@ -1,9 +1,10 @@
+import {isDemoMode} from "./configuration";
 import engine from "./engine";
 import "./httpProxy";
 import "./vncProxy";
 import "./websocket";
 
-engine.start();
+if (!isDemoMode) engine.start();
 
 /*** Express ***/
 import * as express from "express";
@@ -33,8 +34,3 @@ app.use(
 
 const server = http.createServer(app);
 server.listen(80);
-
-// /* Load Demo Store Data */
-// const testData = require("../testData.json");
-// if (config.loadTestData)
-//   deviceStore._deviceData = new Map(Object.entries(testData));

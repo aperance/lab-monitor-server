@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import {readFileSync} from "fs";
 import {
   isActionConfig,
   isClientConfig,
@@ -12,6 +12,8 @@ import {
 const fileOutput: unknown = JSON.parse(readFileSync("./config.json", "utf8"));
 
 const config = isConfig(fileOutput) ? fileOutput : null;
+
+export const isDemoMode = (config && config.demoMode) || false;
 
 export const getEngineConfig = () => {
   if (!config || !isEngineConfig(config.engine))

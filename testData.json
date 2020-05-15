@@ -1,35 +1,62 @@
 {
   "127.0.0.1": {
     "state": {
-      "timestamp": 1506240719782,
+      "timestamp": "1506240719782",
+      "serial": "123456789",
+      "model": "Model A",
+      "firmware": "1.0.1",
       "Property_A": "Value_A1",
       "Property_B": "Value_B1"
     },
     "history": {
-      "Property_A": [[1506240719782, "Value_A1"], [1506240719763, "value_a1"]],
-      "Property_B": [[1506240719782, "Value_B1"], [1506240719763, "value_b1"]]
+      "Property_A": [
+        ["1506240719782", "Value_A1"],
+        ["1506240719763", "value_a1"]
+      ],
+      "Property_B": [
+        ["1506240719782", "Value_B1"],
+        ["1506240719763", "value_b1"]
+      ]
     }
   },
   "127.0.0.2": {
     "state": {
-      "timestamp": 1506240719782,
+      "timestamp": "1506240719782",
+      "serial": "987654321",
+      "model": "Model A",
+      "firmware": "1.0.2",
       "Property_A": "Value_A2",
       "Property_B": "Value_B2"
     },
     "history": {
-      "Property_A": [[1506240719782, "Value_A2"], [1506240719763, "value_a2"]],
-      "Property_B": [[1506240719782, "Value_B2"], [1506240719763, "value_b2"]]
+      "Property_A": [
+        ["1506240719782", "Value_A2"],
+        ["1506240719763", "value_a2"]
+      ],
+      "Property_B": [
+        ["1506240719782", "Value_B2"],
+        ["1506240719763", "value_b2"]
+      ]
     }
   },
   "127.0.0.3": {
     "state": {
-      "timestamp": 1506240719782,
+      "timestamp": "1506240719782",
+      "serial": "564738291",
+      "model": "Model B",
+      "firmware": "1.0.2",
       "Property_A": "Value_A3",
       "Property_B": "Value_B3"
     },
     "history": {
-      "Property_A": [[1506240719782, "Value_A3"], [1506240719763, "value_a3"]],
-      "Property_B": [[1506240719782, "Value_B3"], [1506240719763, "value_b3"]]
+      "Property_A": [
+        ["1506240719782", "Value_A3"],
+        ["1506240719763", "value_a3"]
+      ],
+      "Property_B": [
+        ["1506240719782", "Value_B3"],
+        ["1506240719763", "value_b3"]
+      ]
     }
   }
 }
