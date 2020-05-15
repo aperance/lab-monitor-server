@@ -12,10 +12,13 @@ import {
 const ajv = new Ajv();
 
 export const isConfig = (data: unknown): data is Config => {
+  if (typeof data === "undefined") return false;
   return true;
 };
 
 export const isActionConfig = (data: unknown): data is ActionConfig => {
+  if (typeof data === "undefined") return false;
+
   const schema = {
     properties: {},
     required: [],
