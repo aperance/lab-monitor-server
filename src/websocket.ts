@@ -15,6 +15,8 @@ const demoMode = true;
  * Create new WebSocket server on port 4000.
  */
 const server = new ws.Server({port: parseInt(process.env.PORT || "4000")});
+console.log("WebSocket handler listening on port " + process.env.PORT);
+
 log.info("WebSocket handler listening on port 4000");
 
 /**
