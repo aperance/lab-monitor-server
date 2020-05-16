@@ -1,12 +1,14 @@
-import {isDemoMode} from "./configuration";
 import engine from "./engine";
+import {startDemo} from "./demoEngine";
 import "./httpProxy";
 import "./vncProxy";
 import "./websocket";
 
-if (!isDemoMode) engine.start();
+if (process.env.DEMO === "true") startDemo();
+else engine.start();
 
 /*** Express ***/
+
 import * as express from "express";
 import * as http from "http";
 

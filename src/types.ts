@@ -2,7 +2,6 @@
  * Configuration Types
  */
 export interface Config {
-  demoMode: boolean;
   deviceStore: unknown;
   engine: unknown;
   actions: unknown;

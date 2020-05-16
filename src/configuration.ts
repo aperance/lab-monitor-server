@@ -1,7 +1,6 @@
 import {readFileSync} from "fs";
 import {
   isActionConfig,
-  isClientConfig,
   isConfig,
   isDeviceStoreConfig,
   isEngineConfig,
@@ -9,11 +8,33 @@ import {
   isWatcherConfig
 } from "./typeGuards";
 
-const fileOutput: unknown = JSON.parse(readFileSync("./config.json", "utf8"));
+const demoConfig = {
+  engine: {
+    addressRanges: []
+  },
+  deviceStore: {
+    maxHistory: 10,
+    dateFormat: {}
+  },
+  watcher: {
+    port: 80,
+    path: "",
+    sequenceKey: "",
+    maxRetries: 3
+  },
+  actions: {},
+  psTools: {
+    user: "",
+    password: ""
+  }
+};
+
+const fileOutput: unknown =
+  process.env.DEMO === "true"
+    ? demoConfig
+    : JSON.parse(readFileSync("./config.json", "utf8"));
 
 const config = isConfig(fileOutput) ? fileOutput : null;
-
-export const isDemoMode = (config && config.demoMode) || false;
 
 export const getEngineConfig = () => {
   if (!config || !isEngineConfig(config.engine))

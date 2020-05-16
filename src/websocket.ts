@@ -4,15 +4,17 @@ import * as ws from "ws";
 import actionHandler from "./actionHandler";
 import deviceStore from "./deviceStore";
 import engine from "./engine";
-import { websocket as log } from "./logger";
+import {websocket as log} from "./logger";
 import psToolsHandler from "./psToolsHandler";
-import { isWsMessage } from "./typeGuards";
-import { PsToolsResponse, WsMessage, WsMessageTypeKeys } from "./types";
+import {isWsMessage} from "./typeGuards";
+import {PsToolsResponse, WsMessage, WsMessageTypeKeys} from "./types";
+
+const demoMode = true;
 
 /**
  * Create new WebSocket server on port 4000.
  */
-const server = new ws.Server({ port: 4000 });
+const server = new ws.Server({port: 4000});
 log.info("WebSocket handler listening on port 4000");
 
 /**
@@ -106,4 +108,4 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
   }
 };
 
-export { sendToClient, sendToAllClients };
+export {sendToClient, sendToAllClients};

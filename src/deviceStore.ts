@@ -1,6 +1,6 @@
 /** @module DeviceStore */
 
-import {getDeviceStoreConfig, isDemoMode} from "./configuration";
+import {getDeviceStoreConfig} from "./configuration";
 import {
   AccumulatedRecords,
   DeviceRecord,
@@ -31,12 +31,7 @@ class DeviceStore {
    * Creates an instance of DeviceStore.
    */
   constructor() {
-    if (!isDemoMode) this.deviceData = new Map();
-    else {
-      const testData = require("../testData.json");
-      this.deviceData = new Map(Object.entries(testData));
-      console.log(this.deviceData);
-    }
+    this.deviceData = new Map();
   }
 
   /**
