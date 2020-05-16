@@ -35,4 +35,4 @@ app.use(
 );
 
 const server = http.createServer(app);
-server.listen(process.env.PORT || 80);
+server.listen(80);
