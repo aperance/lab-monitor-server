@@ -1,39 +1,55 @@
 import deviceStore from "./deviceStore";
-import {
-  AccumulatedRecords,
-  DeviceRecord,
-  History,
-  HistoryDiff,
-  State,
-  StateDiff,
-  Status,
-  WsMessageTypeKeys
-} from "./types";
+import {State, Status} from "./types";
 
-const deviceCount = 25;
+const deviceCount = 50;
 
 const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
-const firmwareOptions = ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5"];
-const modeOptions = ["Mode 1", "Mode 2", "Mode 3", "Mode 4", "Mode 5"];
+const firmwareOptions = ["v1.0.5", "v2.0.4", "v3.0.3", "v4.0.2", "v5.0.1"];
+const randomProperties = [
+  "propertyA",
+  "propertyB",
+  "propertyC",
+  "propertyD",
+  "propertyE",
+  "propertyF",
+  "propertyG"
+];
 
 const generateNumericString = () =>
-  Math.floor(Math.random() * Math.pow(10, 10)).toString();
-const pickFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+  Math.random().toString().substr(2, 10).padStart(10, "0").toUpperCase();
 
-const map = new Map();
+const generateAlphaNumericString = () =>
+  Math.random().toString(36).substr(2, 10).padStart(10, "0").toUpperCase();
+
+const pickFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
 export const startDemo = () => {
   console.log("Demo Engine Started");
 
   for (let i = 1; i <= deviceCount; i++) {
-    const id = "127.0.0." + i;
+    const ipAddress = "127.0.0." + i;
     const state: State = {
+      ipAddress,
       serial: generateNumericString(),
-      model: pickFrom(hardwareOptions),
-      firmware: pickFrom(firmwareOptions),
-      Property_A: "Value_A1",
-      Property_B: "Value_B1"
+      hardware: pickFrom(hardwareOptions),
+      firmware: pickFrom(firmwareOptions)
     };
-    deviceStore.set(id, Status.Connected, state);
+    randomProperties.forEach(
+      prop => (state[prop] = generateAlphaNumericString())
+    );
+    deviceStore.set(ipAddress, Status.Connected, state);
   }
 };
+
+const updateDevice = () => {
+  const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
+  const state = {...deviceStore.getAccumulatedRecords().state[ipAddress]};
+
+  randomProperties.forEach(
+    prop => (state[prop] = generateAlphaNumericString())
+  );
+
+  deviceStore.set(ipAddress, Status.Connected, state);
+};
+
+setInterval(updateDevice, 200);
