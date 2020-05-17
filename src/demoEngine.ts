@@ -18,9 +18,6 @@ const randomProperties = [
 const generateNumericString = () =>
   Math.random().toString().substr(2, 10).padStart(10, "0").toUpperCase();
 
-const generateAlphaNumericString = () =>
-  Math.random().toString(36).substr(2, 10).padStart(10, "0").toUpperCase();
-
 const pickFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
 export const startDemo = () => {
@@ -34,9 +31,7 @@ export const startDemo = () => {
       hardware: pickFrom(hardwareOptions),
       firmware: pickFrom(firmwareOptions)
     };
-    randomProperties.forEach(
-      prop => (state[prop] = generateAlphaNumericString())
-    );
+    randomProperties.forEach(prop => (state[prop] = generateNumericString()));
     deviceStore.set(ipAddress, Status.Connected, state);
   }
 };
@@ -44,11 +39,7 @@ export const startDemo = () => {
 const updateDevice = () => {
   const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
   const state = {...deviceStore.getAccumulatedRecords().state[ipAddress]};
-
-  randomProperties.forEach(
-    prop => (state[prop] = generateAlphaNumericString())
-  );
-
+  randomProperties.forEach(prop => (state[prop] = generateNumericString()));
   deviceStore.set(ipAddress, Status.Connected, state);
 };
 
