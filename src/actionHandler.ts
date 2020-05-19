@@ -2,14 +2,9 @@
 
 import * as got from "got";
 import * as querystring from "querystring";
-import { getActionConfig } from "./configuration";
-import { actionHandler as log } from "./logger";
-import {
-  ActionRequest,
-  ActionResponse,
-  ActionResult,
-  WsPayload
-} from "./types";
+import {getActionConfig} from "./configuration";
+import {actionHandler as log} from "./logger";
+import {ActionRequest, ActionResponse, ActionResult, WsPayload} from "./types";
 
 const actionLookup = getActionConfig();
 
@@ -26,10 +21,10 @@ const actionHandler = async (request: WsPayload): Promise<ActionResponse> => {
     log.info(validatedRequest);
     const results: ActionResult[] = await sendRequests(validatedRequest);
     log.info(results);
-    return { err: null, results };
+    return {err: null, results};
   } catch (err) {
     log.error(err);
-    return { err, results: null };
+    return {err: err.message, results: null};
   }
 };
 
@@ -63,7 +58,7 @@ const validateParamaters = (request: WsPayload): ActionRequest => {
 const sendRequests = (
   actionRequest: ActionRequest
 ): Promise<ActionResult[]> => {
-  const { path, parameters } = actionLookup[actionRequest.type];
+  const {path, parameters} = actionLookup[actionRequest.type];
   return Promise.all(
     actionRequest.targets.map((ipAddress: string) => {
       let url = "http://" + ipAddress + path;
@@ -72,13 +67,13 @@ const sendRequests = (
       log.info(url);
 
       return (
-        got(url, { retries: 0 })
-          .then(res => ({ success: true, err: null }))
+        got(url, {retries: 0})
+          .then(res => ({success: true, err: null}))
           /**
            * Promise not rejected on errors, so that
            * parallel requests are not interrupted.
            */
-          .catch(err => ({ success: false, err }))
+          .catch(err => ({success: false, err}))
       );
     })
   );
