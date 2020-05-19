@@ -49,6 +49,8 @@ server.on("connection", (socket, req) => {
  * @param {WsMessage} outboundMessage
  */
 const sendToClient = (socket: ws, outboundMessage: WsMessage) => {
+  console.log(outboundMessage);
+
   log.info(outboundMessage.type + " sent to client");
   socket.send(JSON.stringify(outboundMessage));
 };
@@ -77,6 +79,14 @@ const sendToAllClients = (outboundMessage: WsMessage) => {
  */
 const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
   log.info(inboundMessage.type + " received");
+
+  if (process.env.DEMO === "true") {
+    sendToClient(socket, {
+      type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
+      payload: {err: "Functionality not available in demo mode.", results: null}
+    });
+    return;
+  }
 
   switch (inboundMessage.type) {
     case WsMessageTypeKeys.REFRESH_DEVICE:
