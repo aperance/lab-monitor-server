@@ -5,15 +5,9 @@ const deviceCount = 50;
 
 const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
 const firmwareOptions = ["v1.0.5", "v2.0.4", "v3.0.3", "v4.0.2", "v5.0.1"];
-const randomProperties = [
-  "propertyA",
-  "propertyB",
-  "propertyC",
-  "propertyD",
-  "propertyE",
-  "propertyF",
-  "propertyG"
-];
+const randomProperties = [...Array(26)].map(
+  (_, i) => "property" + String.fromCharCode(65 + i)
+);
 
 const generateNumericString = () =>
   Math.random().toString().substr(2, 10).padStart(10, "0").toUpperCase();
