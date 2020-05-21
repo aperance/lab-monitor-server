@@ -7,17 +7,17 @@ import engine from "./engine";
 import {websocket as log} from "./logger";
 import psToolsHandler from "./psToolsHandler";
 import {isWsMessage} from "./typeGuards";
-import {PsToolsResponse, WsMessage, WsMessageTypeKeys} from "./types";
+import {WsMessage, WsMessageTypeKeys} from "./types";
 
-const demoMode = true;
+const port =
+  process.env.DEMO_ROLE === "primary" ? process.env.PORT || "4000" : "4000";
 
 /**
- * Create new WebSocket server on port 4000.
+ * Create new WebSocket server.
  */
-const server = new ws.Server({port: parseInt(process.env.PORT || "4000")});
-console.log("WebSocket handler listening on port " + process.env.PORT);
-
-log.info("WebSocket handler listening on port 4000");
+const server = new ws.Server({port: parseInt(port)});
+console.log("WebSocket handler listening on port " + port);
+log.info("WebSocket handler listening on port " + port);
 
 /**
  * On WebSocket connection event:
@@ -49,8 +49,6 @@ server.on("connection", (socket, req) => {
  * @param {WsMessage} outboundMessage
  */
 const sendToClient = (socket: ws, outboundMessage: WsMessage) => {
-  console.log(outboundMessage);
-
   log.info(outboundMessage.type + " sent to client");
   socket.send(JSON.stringify(outboundMessage));
 };

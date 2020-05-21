@@ -15,7 +15,9 @@ const generateNumericString = () =>
 const pickFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
 export const startDemo = () => {
-  console.log("Demo Engine Started");
+  console.log(
+    `Starting in demo mode, role: ${process.env.DEMO_ROLE || "full"}`
+  );
 
   for (let i = 1; i <= deviceCount; i++) {
     const ipAddress = "127.0.0." + i;

@@ -3,10 +3,17 @@
 import * as net from "net";
 import * as querystring from "querystring";
 import * as ws from "ws";
-import { vncProxy as log } from "./logger";
+import {vncProxy as log} from "./logger";
 
-const server = new ws.Server({ port: 5000 });
-log.info("VNC proxy listening on port 5000");
+const port =
+  process.env.DEMO_ROLE === "vnc" ? process.env.PORT || "5000" : "5000";
+
+/**
+ * Create new WebSocket server.
+ */
+const server = new ws.Server({port: parseInt(port)});
+console.log("VNC proxy listening on port " + port);
+log.info("VNC proxy listening on port " + port);
 
 /**
  * On WebSocket connection, establish VNC (TCP) connection to target device,
@@ -14,7 +21,7 @@ log.info("VNC proxy listening on port 5000");
  */
 server.on("connection", (socket, req) => {
   if (!req.url) return;
-  const { port, ip } = querystring.parse(req.url.replace("/?", ""));
+  const {port, ip} = querystring.parse(req.url.replace("/?", ""));
   if (typeof port !== "string" || typeof ip !== "string") return;
 
   const tcp = net.createConnection(parseInt(port, 10), ip, () => {
