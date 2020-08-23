@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 /** @module websocket */
 
 import * as ws from "ws";
@@ -36,7 +37,6 @@ server.on("connection", (socket, req) => {
    * On socket message event, parse message and call inboundMessageRouter.
    */
   socket.on("message", function incoming(inboundString) {
-    // @ts-ignore
     const inboundObject = JSON.parse(inboundString as string) as unknown;
     if (isWsMessage(inboundObject)) inboundMessageRouter(socket, inboundObject);
   });
@@ -48,7 +48,7 @@ server.on("connection", (socket, req) => {
  * @param {ws} socket
  * @param {WsMessage} outboundMessage
  */
-const sendToClient = (socket: ws, outboundMessage: WsMessage) => {
+const sendToClient = (socket: ws, outboundMessage: WsMessage): void => {
   log.info(outboundMessage.type + " sent to client");
   socket.send(JSON.stringify(outboundMessage));
 };
@@ -58,7 +58,7 @@ const sendToClient = (socket: ws, outboundMessage: WsMessage) => {
  *
  * @param {WsMessage} outboundMessage
  */
-const sendToAllClients = (outboundMessage: WsMessage) => {
+const sendToAllClients = (outboundMessage: WsMessage): void => {
   server.clients.forEach(client => {
     if (client.readyState === ws.OPEN) {
       client.send(JSON.stringify(outboundMessage));

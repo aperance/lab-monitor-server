@@ -29,7 +29,7 @@ else {
 
   app.use(
     express.static("public", {
-      setHeaders: (res, path, stat) => {
+      setHeaders: res => {
         res.set("Access-Control-Allow-Origin", "*");
       }
     })

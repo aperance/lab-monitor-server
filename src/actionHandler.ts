@@ -68,7 +68,7 @@ const sendRequests = (
 
       return (
         got(url, {retries: 0})
-          .then(res => ({success: true, err: null}))
+          .then(() => ({success: true, err: null}))
           /**
            * Promise not rejected on errors, so that
            * parallel requests are not interrupted.

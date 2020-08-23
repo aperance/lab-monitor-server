@@ -3,7 +3,7 @@
 import * as http from "http";
 import * as httpProxy from "http-proxy";
 import * as querystring from "querystring";
-import { httpProxy as log } from "./logger";
+import {httpProxy as log} from "./logger";
 
 const addressMap: Map<string, string> = new Map();
 const proxyServer = httpProxy.createProxyServer({});
@@ -31,12 +31,12 @@ const server = http.createServer((req, res) => {
 
     if (!destination) throw new Error("No destination address provided");
 
-    proxyServer.web(req, res, { target: `http://${destination}:8001` });
+    proxyServer.web(req, res, {target: `http://${destination}:8001`});
     log.info(`Proxying http from ${source} to ${destination}`);
   } catch (err) {
     log.error(err);
 
-    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.writeHead(500, {"Content-Type": "text/plain"});
     res.write(err.message);
     res.end();
   }

@@ -14,7 +14,7 @@ const generateNumericString = () =>
 
 const pickFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-export const startDemo = () => {
+export const startDemo = (): void => {
   console.log(
     `Starting in demo mode, role: ${process.env.DEMO_ROLE || "full"}`
   );

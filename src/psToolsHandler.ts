@@ -1,10 +1,10 @@
 /** @module psToolsHandler */
 
-import { spawn } from "child_process";
-import { getPsToolsConfig } from "./configuration";
-import { PsToolsRequest, PsToolsResponse } from "./types";
+import {spawn} from "child_process";
+import {getPsToolsConfig} from "./configuration";
+import {PsToolsRequest, PsToolsResponse} from "./types";
 
-const { user, password } = getPsToolsConfig();
+const {user, password} = getPsToolsConfig();
 
 /**
  * Utilizes PSTools (as child process) to run the provided command on the
@@ -16,9 +16,9 @@ const { user, password } = getPsToolsConfig();
 const psToolsHandler = (
   request: PsToolsRequest,
   sendResponse: (payload: PsToolsResponse) => void
-) => {
+): void => {
   try {
-    const { target, mode, argument } = request;
+    const {target, mode, argument} = request;
 
     if (typeof target !== "string" || typeof argument !== "string")
       throw Error(`Missing or invalid parameters: ${JSON.stringify(request)}`);
@@ -30,7 +30,7 @@ const psToolsHandler = (
     else
       throw Error(`Missing or invalid parameters: ${JSON.stringify(request)}`);
 
-    const process = spawn(mode, [args], { cwd: "C:\\PSTools\\", shell: true });
+    const process = spawn(mode, [args], {cwd: "C:\\PSTools\\", shell: true});
 
     sendResponse({
       err: null,
