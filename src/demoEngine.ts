@@ -1,5 +1,5 @@
 import deviceStore from "./deviceStore";
-import {State, Status} from "./types";
+import { State, Status } from "./types";
 
 const deviceCount = 50;
 
@@ -25,18 +25,18 @@ export const startDemo = (): void => {
       ipAddress,
       serial: generateNumericString(),
       hardware: pickFrom(hardwareOptions),
-      firmware: pickFrom(firmwareOptions)
+      firmware: pickFrom(firmwareOptions),
     };
-    randomProperties.forEach(prop => (state[prop] = generateNumericString()));
+    randomProperties.forEach((prop) => (state[prop] = generateNumericString()));
     deviceStore.set(ipAddress, Status.Connected, state);
   }
+
+  setInterval(updateDevice, 200);
 };
 
 const updateDevice = () => {
   const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
-  const state = {...deviceStore.getAccumulatedRecords().state[ipAddress]};
-  randomProperties.forEach(prop => (state[prop] = generateNumericString()));
+  const state = { ...deviceStore.getAccumulatedRecords().state[ipAddress] };
+  randomProperties.forEach((prop) => (state[prop] = generateNumericString()));
   deviceStore.set(ipAddress, Status.Connected, state);
 };
-
-setInterval(updateDevice, 200);
