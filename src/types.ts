@@ -1,46 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Configuration Types
- */
-export interface Config {
-  deviceStore: unknown;
-  engine: unknown;
-  actions: unknown;
-  psTools: unknown;
-  watcher: unknown;
-}
-
-export interface DeviceStoreConfig {
-  maxHistory: number;
-  dateFormat: {[key: string]: string};
-}
-
-export interface ActionConfig {
-  [type: string]: {
-    path: string;
-    parameters: string[];
-  };
-}
-
-export interface EngineConfig {
-  addressRanges: Array<{
-    subnet: string;
-    start: number;
-    end: number;
-  }>;
-}
-
-export interface PsToolsConfig {
-  user: string;
-  password: string;
-}
-
-export interface WatcherConfig {
-  port: number;
-  path: string;
-  sequenceKey: string;
-}
 
 /**
  * Device Store Types
@@ -49,7 +8,7 @@ export const enum Status {
   Connected = "CONNECTED",
   Retry = "RETRY",
   Disconnected = "DISCONNECTED",
-  Inactive = "INACTIVE"
+  Inactive = "INACTIVE",
 }
 
 export interface State {
@@ -94,7 +53,7 @@ export const enum WsMessageTypeKeys {
   PSTOOLS_COMMAND = "PSTOOLS_COMMAND",
   PSTOOLS_COMMAND_RESPONSE = "PSTOOLS_COMMAND_RESPONSE",
   USER_DIALOG = "USER_DIALOG",
-  ERROR = "ERROR"
+  ERROR = "ERROR",
 }
 
 export interface WsPayload {
@@ -124,7 +83,7 @@ export interface PsToolsResponse {
 export interface ActionRequest {
   targets: string[];
   type: string;
-  parameters?: {[key: string]: any};
+  parameters?: { [key: string]: any };
 }
 
 export interface ActionResult {

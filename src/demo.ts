@@ -1,6 +1,27 @@
 import deviceStore from "./deviceStore";
 import { State, Status } from "./types";
 
+const demoConfig = {
+  engine: {
+    addressRanges: [],
+  },
+  deviceStore: {
+    maxHistory: 10,
+    dateFormat: {},
+  },
+  watcher: {
+    port: 80,
+    path: "",
+    sequenceKey: "",
+    maxRetries: 3,
+  },
+  actions: {},
+  psTools: {
+    user: "",
+    password: "",
+  },
+};
+
 const deviceCount = 50;
 
 const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
@@ -14,7 +35,7 @@ const generateNumericString = () =>
 
 const pickFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-export const startDemo = (): void => {
+const startDemo = (): void => {
   console.log(
     `Starting in demo mode, role: ${process.env.DEMO_ROLE || "full"}`
   );
@@ -40,3 +61,5 @@ const updateDevice = () => {
   randomProperties.forEach((prop) => (state[prop] = generateNumericString()));
   deviceStore.set(ipAddress, Status.Connected, state);
 };
+
+export { demoConfig, startDemo };

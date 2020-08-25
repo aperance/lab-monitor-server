@@ -2,7 +2,7 @@ import * as express from "express";
 import * as http from "http";
 
 import engine from "./engine";
-import {startDemo} from "./demoEngine";
+import { startDemo } from "./demo";
 import "./httpProxy";
 import "./vncProxy";
 import "./websocket";
@@ -29,9 +29,9 @@ else {
 
   app.use(
     express.static("public", {
-      setHeaders: res => {
+      setHeaders: (res, path, stat) => {
         res.set("Access-Control-Allow-Origin", "*");
-      }
+      },
     })
   );
 
