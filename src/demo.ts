@@ -1,27 +1,6 @@
 import deviceStore from "./deviceStore";
 import { State, Status } from "./types";
 
-const demoConfig = {
-  engine: {
-    addressRanges: [],
-  },
-  deviceStore: {
-    maxHistory: 10,
-    dateFormat: {},
-  },
-  watcher: {
-    port: 80,
-    path: "",
-    sequenceKey: "",
-    maxRetries: 3,
-  },
-  actions: {},
-  psTools: {
-    user: "",
-    password: "",
-  },
-};
-
 const deviceCount = 50;
 
 const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
@@ -62,4 +41,4 @@ const updateDevice = () => {
   deviceStore.set(ipAddress, Status.Connected, state);
 };
 
-export { demoConfig, startDemo };
+export { startDemo };

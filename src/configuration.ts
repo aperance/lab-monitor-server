@@ -1,6 +1,5 @@
 import { readFileSync } from "fs";
 import * as Ajv from "ajv";
-import { demoConfig } from "./demo";
 
 /**
  * Configuration Types
@@ -45,6 +44,27 @@ export interface WatcherConfig {
 }
 
 const ajv = new Ajv();
+
+const demoConfig = {
+  engine: {
+    addressRanges: [],
+  },
+  deviceStore: {
+    maxHistory: 10,
+    dateFormat: {},
+  },
+  watcher: {
+    port: 80,
+    path: "",
+    sequenceKey: "",
+    maxRetries: 3,
+  },
+  actions: {},
+  psTools: {
+    user: "",
+    password: "",
+  },
+};
 
 const config: Config =
   process.env.DEMO === "true"
