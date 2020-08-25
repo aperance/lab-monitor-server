@@ -7,7 +7,27 @@ import deviceStore from "./deviceStore";
 import engine from "./engine";
 import { websocket as log } from "./logger";
 import psToolsHandler from "./psToolsHandler";
-import { WsMessage, WsMessageTypeKeys } from "./types";
+
+export const enum WsMessageTypeKeys {
+  CONFIGURATION = "CONFIGURATION",
+  DEVICE_DATA_ALL = "DEVICE_DATA_ALL",
+  DEVICE_DATA_UPDATE = "DEVICE_DATA_UPDATE",
+  REFRESH_DEVICE = "REFRESH_DEVICE",
+  CLEAR_DEVICE = "CLEAR_DEVICE",
+  DEVICE_ACTION = "DEVICE_ACTION",
+  DEVICE_ACTION_RESPONSE = "DEVICE_ACTION_RESPONSE",
+  PSTOOLS_COMMAND = "PSTOOLS_COMMAND",
+  PSTOOLS_COMMAND_RESPONSE = "PSTOOLS_COMMAND_RESPONSE",
+  USER_DIALOG = "USER_DIALOG",
+  ERROR = "ERROR",
+}
+
+interface WsMessage {
+  type: WsMessageTypeKeys;
+  payload: {
+    [key: string]: any;
+  };
+}
 
 const port =
   process.env.DEMO_ROLE === "primary" ? process.env.PORT || "4000" : "4000";
@@ -35,9 +55,10 @@ server.on("connection", (socket, req) => {
   /**
    * On socket message event, parse message and call inboundMessageRouter.
    */
-  socket.on("message", function incoming(inboundString) {
-    const inboundObject = JSON.parse(inboundString as string) as unknown;
-    if (isWsMessage(inboundObject)) inboundMessageRouter(socket, inboundObject);
+  socket.on("message", function incoming(data: string) {
+    const { type, payload }: { [key: string]: unknown } = JSON.parse(data);
+    if (typeof type === "string" && typeof payload === "object" && payload)
+      inboundMessageRouter(socket, { type, payload } as WsMessage);
   });
 });
 
@@ -118,20 +139,6 @@ const inboundMessageRouter = async (socket: ws, inboundMessage: WsMessage) => {
     default:
       break;
   }
-};
-
-/**
- * Type guard for Message interface
- *
- * @param {any} inboundObject
- * @returns
- */
-const isWsMessage = (inboundObject: any): inboundObject is WsMessage => {
-  return (
-    typeof inboundObject.type === "string" &&
-    typeof inboundObject.payload === "object" &&
-    inboundObject.payload !== null
-  );
 };
 
 export { sendToClient, sendToAllClients };

@@ -1,12 +1,11 @@
 /** @module Watcher */
 
 import * as got from "got";
-import {getWatcherConfig} from "./configuration";
-import deviceStore from "./deviceStore";
-import {watcher as log} from "./logger";
-import {State, Status} from "./types";
+import { getWatcherConfig } from "./configuration";
+import deviceStore, { State, Status } from "./deviceStore";
+import { watcher as log } from "./logger";
 
-const {port, path, sequenceKey} = getWatcherConfig();
+const { port, path, sequenceKey } = getWatcherConfig();
 
 /**
  * Continuously polls the device at the provided IP address. Received
@@ -17,9 +16,9 @@ class Watcher {
   private ipAddress: string;
   private request: got.GotPromise<string> | null;
   private state: Generator<
-    {status: Status; delay: number},
+    { status: Status; delay: number },
     void,
-    {success: boolean}
+    { success: boolean }
   > | null;
   private timer: number | null;
 
@@ -82,19 +81,19 @@ class Watcher {
     /** Fetch state data from device, using url and timeout value from config */
     this.request = got(
       `http://${this.ipAddress}:${port}/${path}?${sequenceKey}=${sequence}`,
-      {retries: 0, timeout: {connect: 5000, socket: 60000}}
+      { retries: 0, timeout: { connect: 5000, socket: 60000 } }
     );
     try {
       const response = await this.request;
       const deviceData = this.evalWrapper(response.body);
-      const {done} = this.state.next({success: true});
+      const { done } = this.state.next({ success: true });
       if (done) return;
       deviceStore.set(this.ipAddress, Status.Connected, deviceData);
       setImmediate(this.poll.bind(this), deviceData[sequenceKey]);
     } catch (err) {
       if (err.name === "RequestError" || err.name === "EvalError") {
         log.error(`${this.ipAddress}: ${err}`);
-        const {done, value} = this.state.next({success: false});
+        const { done, value } = this.state.next({ success: false });
         if (done || !value) return;
         deviceStore.set(this.ipAddress, value.status);
         this.timer = setTimeout(this.poll.bind(this), value.delay * 60000);
@@ -130,16 +129,16 @@ class Watcher {
    * @yields { state, delay }
    */
   private *stateGenerator(): Generator<
-    {status: Status; delay: number},
+    { status: Status; delay: number },
     void,
-    {success: boolean}
+    { success: boolean }
   > {
     let status = Status.Inactive;
     let lastCommunication = 0;
     let delay = 0;
 
     while (true) {
-      const result = yield {status, delay};
+      const result = yield { status, delay };
       const previousStatus: Status = status;
 
       switch (previousStatus) {

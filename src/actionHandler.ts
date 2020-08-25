@@ -2,9 +2,24 @@
 
 import * as got from "got";
 import * as querystring from "querystring";
-import {getActionConfig} from "./configuration";
-import {actionHandler as log} from "./logger";
-import {ActionRequest, ActionResponse, ActionResult, WsPayload} from "./types";
+import { getActionConfig } from "./configuration";
+import { actionHandler as log } from "./logger";
+
+interface ActionRequest {
+  targets: string[];
+  type: string;
+  parameters?: { [key: string]: any };
+}
+
+interface ActionResult {
+  err: Error | null;
+  success: boolean;
+}
+
+interface ActionResponse {
+  err: Error | null;
+  results: ActionResult[] | null;
+}
 
 const actionLookup = getActionConfig();
 
@@ -15,16 +30,18 @@ const actionLookup = getActionConfig();
  * @param {WsPayload} request Type, parameters, and targets for action.
  * @returns {Promise} Results to be sent back to client. Should not reject.
  */
-const actionHandler = async (request: WsPayload): Promise<ActionResponse> => {
+const actionHandler = async (request: {
+  [key: string]: any;
+}): Promise<ActionResponse> => {
   try {
     const validatedRequest: ActionRequest = validateParamaters(request);
     log.info(validatedRequest);
     const results: ActionResult[] = await sendRequests(validatedRequest);
     log.info(results);
-    return {err: null, results};
+    return { err: null, results };
   } catch (err) {
     log.error(err);
-    return {err: err.message, results: null};
+    return { err: err.message, results: null };
   }
 };
 
@@ -35,7 +52,7 @@ const actionHandler = async (request: WsPayload): Promise<ActionResponse> => {
  * @returns {ActionRequest}
  * @throws {Error} on mismatch
  */
-const validateParamaters = (request: WsPayload): ActionRequest => {
+const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
   if (!actionLookup[request.type])
     throw new Error("Unknown action type specified: " + request.type);
   const expected = actionLookup[request.type].parameters.sort();
@@ -58,7 +75,7 @@ const validateParamaters = (request: WsPayload): ActionRequest => {
 const sendRequests = (
   actionRequest: ActionRequest
 ): Promise<ActionResult[]> => {
-  const {path, parameters} = actionLookup[actionRequest.type];
+  const { path, parameters } = actionLookup[actionRequest.type];
   return Promise.all(
     actionRequest.targets.map((ipAddress: string) => {
       let url = "http://" + ipAddress + path;
@@ -67,13 +84,13 @@ const sendRequests = (
       log.info(url);
 
       return (
-        got(url, {retries: 0})
-          .then(() => ({success: true, err: null}))
+        got(url, { retries: 0 })
+          .then(() => ({ success: true, err: null }))
           /**
            * Promise not rejected on errors, so that
            * parallel requests are not interrupted.
            */
-          .catch(err => ({success: false, err}))
+          .catch((err) => ({ success: false, err }))
       );
     })
   );

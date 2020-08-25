@@ -1,19 +1,44 @@
 /** @module DeviceStore */
 
-import {getDeviceStoreConfig} from "./configuration";
-import {
-  AccumulatedRecords,
-  DeviceRecord,
-  History,
-  HistoryDiff,
-  State,
-  StateDiff,
-  Status,
-  WsMessageTypeKeys
-} from "./types";
-import {sendToAllClients} from "./websocket";
+import { getDeviceStoreConfig } from "./configuration";
+import { sendToAllClients, WsMessageTypeKeys } from "./websocket";
 
-const {maxHistory, dateFormat} = getDeviceStoreConfig();
+export const enum Status {
+  Connected = "CONNECTED",
+  Retry = "RETRY",
+  Disconnected = "DISCONNECTED",
+  Inactive = "INACTIVE",
+}
+
+export interface State {
+  [key: string]: string;
+}
+
+interface History {
+  [key: string]: Array<[string, string | null]>;
+}
+
+interface StateDiff {
+  [key: string]: string | null;
+}
+
+interface HistoryDiff extends Array<[string, [string, string | null]]> {}
+
+interface DeviceRecord {
+  state: State;
+  history: History;
+}
+
+interface AccumulatedRecords {
+  state: {
+    [key: string]: State;
+  };
+  history: {
+    [key: string]: History;
+  };
+}
+
+const { maxHistory, dateFormat } = getDeviceStoreConfig();
 
 /**
  * The deviceStore class stores Map of information collectedfrom the polling
@@ -50,7 +75,7 @@ class DeviceStore {
         accumulatedRecords.history[id] = deviceRecord.history;
         return accumulatedRecords;
       },
-      {state: {}, history: {}}
+      { state: {}, history: {} }
     );
   }
 
@@ -76,27 +101,27 @@ class DeviceStore {
     if (status !== Status.Connected && !this.deviceData.has(id)) return;
 
     /** Get previous device record from Map for given id */
-    const current = this.deviceData.get(id) || {state: {}, history: {}};
+    const current = this.deviceData.get(id) || { state: {}, history: {} };
 
     if (receivedState) {
-      nextState = {...receivedState, status, timestamp: this.timestamp};
+      nextState = { ...receivedState, status, timestamp: this.timestamp };
       stateDiff = this.reduceStateToModifiedOnly(current.state, nextState);
       historyDiff = this.mapStateDiffToHistoryDiff(stateDiff);
       nextHistory = this.mergeDiffIntoHistory(current.history, historyDiff);
     } else {
-      nextState = {...current.state, status};
-      stateDiff = {status};
+      nextState = { ...current.state, status };
+      stateDiff = { status };
       historyDiff = [];
       nextHistory = current.history;
     }
 
     // Save latest state and updated history objects to Map.
-    this.deviceData.set(id, {state: nextState, history: nextHistory});
+    this.deviceData.set(id, { state: nextState, history: nextHistory });
 
     // Emit modified state and modified history via callback.
     sendToAllClients({
       type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
-      payload: {id, state: stateDiff, history: historyDiff}
+      payload: { id, state: stateDiff, history: historyDiff },
     });
   }
 
@@ -108,12 +133,12 @@ class DeviceStore {
    */
   public clear(ids?: string[]): void {
     if (!ids) ids = [...this.deviceData.keys()];
-    ids.forEach(id => {
+    ids.forEach((id) => {
       const result = this.deviceData.delete(id);
       if (result)
         sendToAllClients({
           type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
-          payload: {id, state: null, history: null}
+          payload: { id, state: null, history: null },
         });
     });
   }
@@ -127,8 +152,8 @@ class DeviceStore {
    * @returns {StateDiff}
    */
   private reduceStateToModifiedOnly(prevState: State, newState: State) {
-    return Object.keys({...prevState, ...newState})
-      .filter(key => prevState[key] !== newState[key])
+    return Object.keys({ ...prevState, ...newState })
+      .filter((key) => prevState[key] !== newState[key])
       .reduce((stateAcc, propertyKey) => {
         stateAcc[propertyKey] = newState[propertyKey] || null;
         return stateAcc;
@@ -172,7 +197,7 @@ class DeviceStore {
         while (history[key].length > maxHistory) history[key].pop();
         return history;
       },
-      {...prevHistory}
+      { ...prevHistory }
     );
   }
 
