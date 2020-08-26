@@ -20,6 +20,7 @@ interface StateDiff {
   [key: string]: string | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface HistoryDiff extends Array<[string, [string, string | null]]> {}
 
 interface DeviceRecord {
@@ -153,7 +154,7 @@ class DeviceStore {
     return (
       Object.entries(stateDiff)
         // Exclude timestamp and status from being recorded in history
-        .filter(([key, value]) => key !== "timestamp" && key !== "status")
+        .filter(([key]) => key !== "timestamp" && key !== "status")
         .map(([key, value]): [string, [string, string | null]] => {
           return [key, [this.timestamp, value]];
         })

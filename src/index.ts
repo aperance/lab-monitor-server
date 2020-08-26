@@ -15,12 +15,12 @@ else {
 
   const app = express();
 
-  app.get("/refresh", (req, res) => {
+  app.get("/refresh", (_, res) => {
     engine.refresh();
     res.send("OK");
   });
 
-  app.get("/gc", (req, res) => {
+  app.get("/gc", (_, res) => {
     if (global.gc) {
       global.gc();
       res.send("OK");
@@ -29,7 +29,7 @@ else {
 
   app.use(
     express.static("public", {
-      setHeaders: (res, path, stat) => {
+      setHeaders: (res) => {
         res.set("Access-Control-Allow-Origin", "*");
       },
     })
