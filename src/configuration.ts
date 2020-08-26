@@ -1,38 +1,52 @@
 import fs from "fs";
 import Ajv from "ajv";
 
-export interface DeviceStoreConfig {
-  maxHistory: number;
-  dateFormat: { [key: string]: string };
-}
-
-export interface ActionConfig {
-  [type: string]: {
-    path: string;
-    parameters: string[];
-  };
-}
-
-export interface EngineConfig {
-  addressRanges: Array<{
-    subnet: string;
-    start: number;
-    end: number;
-  }>;
-}
-
-export interface PsToolsConfig {
-  user: string;
-  password: string;
-}
-
-export interface WatcherConfig {
-  port: number;
-  path: string;
-  sequenceKey: string;
-}
-
 const ajv = new Ajv({ useDefaults: true });
+
+const schema = {
+  type: "object",
+  properties: {
+    engine: {
+      properties: {
+        addressRanges: { type: "array", default: [] },
+      },
+      additionalProperties: false,
+      default: {},
+    },
+    watcher: {
+      properties: {
+        port: { type: "number", default: 80 },
+        path: { type: "string", default: "" },
+        sequenceKey: { type: "string", default: "" },
+        maxRetries: { type: "number", default: 3 },
+      },
+      additionalProperties: false,
+      default: {},
+    },
+    deviceStore: {
+      properties: {
+        maxHistory: { type: "number", default: 10 },
+        dateFormat: { type: "object", default: {} },
+      },
+      additionalProperties: false,
+      default: {},
+    },
+    psTools: {
+      properties: {
+        user: { type: "string", default: "" },
+        password: { type: "string", default: "" },
+      },
+      additionalProperties: false,
+      default: {},
+    },
+    actions: {
+      properties: {},
+      additionalProperties: true,
+      default: {},
+    },
+  },
+  additionalProperties: false,
+};
 
 /**
  *
@@ -45,96 +59,37 @@ const config = (() => {
   }
 })();
 
-/**
- *
- */
-export const getEngineConfig = (): EngineConfig => {
-  const engineConfig: unknown = config.engine || {};
-  const schema = {
-    type: "object",
-    properties: {
-      addressRanges: { type: "array", default: [] },
-    },
-    required: ["addressRanges"],
-    additionalProperties: false,
-  };
+if (!ajv.validate(schema, config)) throw Error(ajv.errorsText());
 
-  if (!ajv.validate(schema, engineConfig)) throw Error(ajv.errorsText());
+console.log(config);
 
-  return engineConfig as EngineConfig;
+export const engine = config.engine as {
+  addressRanges: {
+    subnet: string;
+    start: number;
+    end: number;
+  }[];
 };
 
-/**
- *
- */
-export const getWatcherConfig = (): WatcherConfig => {
-  const watcherConfig: unknown = config.watcher || {};
-  const schema = {
-    properties: {
-      port: { type: "number", default: 80 },
-      path: { type: "string", default: "" },
-      sequenceKey: { type: "string", default: "" },
-      maxRetries: { type: "number", default: 3 },
-    },
-    required: ["port", "path", "sequenceKey", "maxRetries"],
-    additionalProperties: false,
-  };
-
-  if (!ajv.validate(schema, watcherConfig)) throw Error(ajv.errorsText());
-
-  return watcherConfig as WatcherConfig;
+export const watcher = config.watcher as {
+  port: number;
+  path: string;
+  sequenceKey: string;
 };
 
-/**
- *
- */
-export const getDeviceStoreConfig = (): DeviceStoreConfig => {
-  const deviceStoreConfig: unknown = config.deviceStore || {};
-  const schema = {
-    properties: {
-      maxHistory: { type: "number", default: 10 },
-      dateFormat: { type: "object", default: {} },
-    },
-    required: ["maxHistory", "dateFormat"],
-    additionalProperties: false,
-  };
-
-  if (!ajv.validate(schema, deviceStoreConfig)) throw Error(ajv.errorsText());
-
-  return deviceStoreConfig as DeviceStoreConfig;
+export const deviceStore = config.deviceStore as {
+  maxHistory: number;
+  dateFormat: { [key: string]: string };
 };
 
-/**
- *
- */
-export const getActionConfig = (): ActionConfig => {
-  const actionConfig: unknown = config.actions || {};
-  const schema = {
-    properties: {},
-    required: [],
-    additionalProperties: true,
+export const actions = config.actions as {
+  [type: string]: {
+    path: string;
+    parameters: string[];
   };
-
-  if (!ajv.validate(schema, actionConfig)) throw Error(ajv.errorsText());
-
-  return actionConfig as ActionConfig;
 };
 
-/**
- *
- */
-export const getPsToolsConfig = (): PsToolsConfig => {
-  const psToolsConfig = config.psTools || {};
-  const schema = {
-    properties: {
-      user: { type: "string", default: "" },
-      password: { type: "string", default: "" },
-    },
-    required: ["user", "password"],
-    additionalProperties: false,
-  };
-
-  if (!ajv.validate(schema, psToolsConfig)) throw Error(ajv.errorsText());
-
-  return psToolsConfig as PsToolsConfig;
+export const psTools = config.psTools as {
+  user: string;
+  password: string;
 };

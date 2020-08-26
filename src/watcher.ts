@@ -1,9 +1,7 @@
 import got from "got";
-import { getWatcherConfig } from "./configuration.js";
+import { watcher as config } from "./configuration.js";
 import deviceStore, { State, Status } from "./deviceStore.js";
 import { watcher as log } from "./logger.js";
-
-const { port, path, sequenceKey } = getWatcherConfig();
 
 /**
  * Continuously polls the device at the provided IP address. Received
@@ -68,6 +66,9 @@ class Watcher {
    */
   private async poll(sequence = "0"): Promise<void> {
     if (!this.state) return;
+
+    const { port, path, sequenceKey } = config;
+
     /** Fetch state data from device, using url and timeout value from config */
     this.request = got(
       `http://${this.ipAddress}:${port}/${path}?${sequenceKey}=${sequence}`,
@@ -102,7 +103,7 @@ class Watcher {
   private evalWrapper(data: string): State {
     try {
       const result: State = eval(data.replace("display(", "("));
-      if (!result[sequenceKey]) throw Error();
+      if (!result[config.sequenceKey]) throw Error();
       else return result;
     } catch (err) {
       throw EvalError("Unable to parse response string");

@@ -1,7 +1,5 @@
-import { getEngineConfig } from "./configuration.js";
+import { engine as config } from "./configuration.js";
 import Watcher from "./watcher.js";
-
-const { addressRanges } = getEngineConfig();
 
 const engine = {
   watcherList: {} as {
@@ -15,7 +13,7 @@ const engine = {
   start(): void {
     // tslint:disable-next-line:no-console
     console.log("Engine Started");
-    addressRanges.forEach(({ subnet, start, end }) => {
+    config.addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         const ipAddress = subnet.slice(0, -1) + i;
         this.watcherList[ipAddress] = new Watcher(ipAddress);

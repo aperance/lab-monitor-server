@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { getPsToolsConfig } from "./configuration.js";
+import { psTools as config } from "./configuration.js";
 
 interface PsToolsRequest {
   [x: string]: string | undefined;
@@ -9,8 +9,6 @@ interface PsToolsResponse {
   err: Error | null;
   result: string | null;
 }
-
-const { user, password } = getPsToolsConfig();
 
 /**
  * Utilizes PSTools (as child process) to run the provided command on the
@@ -22,6 +20,7 @@ const psToolsHandler = (
 ): void => {
   try {
     const { target, mode, argument } = request;
+    const { user, password } = config;
 
     if (typeof target !== "string" || typeof argument !== "string")
       throw Error(`Missing or invalid parameters: ${JSON.stringify(request)}`);

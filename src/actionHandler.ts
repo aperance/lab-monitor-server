@@ -1,6 +1,6 @@
 import got from "got";
 import querystring from "querystring";
-import { getActionConfig } from "./configuration.js";
+import { actions } from "./configuration.js";
 import { actionHandler as log } from "./logger.js";
 
 interface ActionRequest {
@@ -18,8 +18,6 @@ interface ActionResponse {
   err: Error | null;
   results: ActionResult[] | null;
 }
-
-const actionLookup = getActionConfig();
 
 /**
  * Handles request from client to perform actions on devices.
@@ -44,9 +42,9 @@ const actionHandler = async (request: {
  * @throws {Error} on mismatch
  */
 const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
-  if (!actionLookup[request.type])
+  if (!actions[request.type])
     throw new Error("Unknown action type specified: " + request.type);
-  const expected = actionLookup[request.type].parameters.sort();
+  const expected = actions[request.type].parameters.sort();
   const received = Object.keys(request.parameters || {}).sort();
   if (
     expected.length !== received.length ||
@@ -63,7 +61,7 @@ const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
 const sendRequests = (
   actionRequest: ActionRequest
 ): Promise<ActionResult[]> => {
-  const { path, parameters } = actionLookup[actionRequest.type];
+  const { path, parameters } = actions[actionRequest.type];
   return Promise.all(
     actionRequest.targets.map((ipAddress: string) => {
       let url = "http://" + ipAddress + path;

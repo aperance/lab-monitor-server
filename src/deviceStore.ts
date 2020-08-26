@@ -1,4 +1,4 @@
-import { getDeviceStoreConfig } from "./configuration.js";
+import { deviceStore as config } from "./configuration.js";
 import { sendToAllClients, WsMessageTypeKeys } from "./websocket.js";
 
 export const enum Status {
@@ -37,7 +37,7 @@ interface AccumulatedRecords {
   };
 }
 
-const { maxHistory, dateFormat } = getDeviceStoreConfig();
+const { maxHistory, dateFormat } = config;
 
 /**
  * The deviceStore class stores Map of information collectedfrom the polling
