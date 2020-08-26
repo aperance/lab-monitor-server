@@ -8,7 +8,6 @@ const { port, path, sequenceKey } = getWatcherConfig();
 /**
  * Continuously polls the device at the provided IP address. Received
  * device data and connection state are sent to the deviceStore.
- * @class Watcher
  */
 class Watcher {
   private ipAddress: string;
@@ -22,7 +21,6 @@ class Watcher {
 
   /**
    * Creates an instance of Watcher for the provided IP address.
-   * @param {string} ipAddress
    */
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
@@ -34,7 +32,6 @@ class Watcher {
   /**
    * Starts operation of the watcher instance. Instantiates stateGenerator
    * as this.state and runs poll method (which will continue recursively).
-   * @public
    */
   public start(): void {
     log.warn("Starting watcher for " + this.ipAddress);
@@ -47,7 +44,6 @@ class Watcher {
    * Stops operation of the current instance. Ends the stateGenerator and any
    * pending request or timeout, which will cause the recursive poll() method
    * to end. Instance will eventually be garbage collected.
-   * @public
    */
   public kill(): void {
     log.warn("Killing watcher for " + this.ipAddress);
@@ -69,10 +65,6 @@ class Watcher {
    * EvalError, got.RequestError, and got.CancelError are caught and handled.
    * Runs recursively until got.Request or timeout are cancelled, or the state
    * generator is ended.
-   * @private
-   * @async
-   * @param {string} [sequence="0"]
-   * @returns {Promise<void>}
    */
   private async poll(sequence = "0"): Promise<void> {
     if (!this.state) return;
@@ -105,9 +97,6 @@ class Watcher {
    * Parses the stringified data received from the device.
    * Note: Uses eval(). While understood as unsafe, this software is intended
    * for use in a controlled environment where an attack is extremely unlikely.
-   * @private
-   * @param {string} data
-   * @returns {State}
    * @throws {EvalError} if unable to parse string.
    */
   private evalWrapper(data: string): State {
@@ -123,8 +112,6 @@ class Watcher {
   /**
    * Creates a state machine to be used by the poll method. Yields new "state"
    * and "delay" values based on a provided "success" boolean.
-   * @private
-   * @yields { state, delay }
    */
   private *stateGenerator(): Generator<
     { status: Status; delay: number },

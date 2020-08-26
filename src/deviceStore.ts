@@ -45,7 +45,6 @@ const { maxHistory, dateFormat } = getDeviceStoreConfig();
  * The history object contains, for each state property, an array of the most
  * recent values with timestamp. The size of the array is set in the config
  * file.
- * @class DeviceStore
  */
 class DeviceStore {
   private deviceData: Map<string, DeviceRecord>;
@@ -60,8 +59,6 @@ class DeviceStore {
   /**
    * Returns all data from Map. All data is sorted into a single
    * state and single history object, reducing work for client.
-   * @public
-   * @returns {AccumulatedRecords}
    */
   public getAccumulatedRecords(): AccumulatedRecords {
     const recordArray: Array<[string, DeviceRecord]> = Array.from(
@@ -82,10 +79,6 @@ class DeviceStore {
    * id. Also compares new and previous state data, saving a history of changes
    * in the Map for given id. Changes to state and history are emitted over
    * websocket via the broadcast function.
-   * @public
-   * @param {string} id
-   * @param {Status} status
-   * @param {State} [receivedState]
    */
   public set(id: string, status: Status): void;
   public set(id: string, status: Status.Connected, receivedState: State): void;
@@ -126,8 +119,6 @@ class DeviceStore {
   /**
    * Removes record for given ID from Map. Sends null as update to trigger local clear.
    * Clears all records in deviceData ma[] if specific list not provided.
-   * @public
-   * @param {string[]} ids
    */
   public clear(ids?: string[]): void {
     if (!ids) ids = [...this.deviceData.keys()];
@@ -144,10 +135,6 @@ class DeviceStore {
   /**
    * Generate modified state object by adding latest values to modified
    * keys list.
-   * @private
-   * @param {State} prevState
-   * @param {State} newState
-   * @returns {StateDiff}
    */
   private reduceStateToModifiedOnly(prevState: State, newState: State) {
     return Object.keys({ ...prevState, ...newState })
@@ -161,9 +148,6 @@ class DeviceStore {
   /**
    * Generate modified history array by adding latest values and timestamps
    * to modified keys list.
-   * @private
-   * @param {StateDiff} stateDiff
-   * @returns {HistoryDiff}
    */
   private mapStateDiffToHistoryDiff(stateDiff: StateDiff) {
     return (
@@ -180,10 +164,6 @@ class DeviceStore {
    * Generate updated history object by merging modified history records
    * into previous history object, popping oldest records if max size
    * setting exceeded.
-   * @private
-   * @param {History} prevHistory
-   * @param {HistoryDiff} historyDiff
-   * @returns {History}
    */
   private mergeDiffIntoHistory(prevHistory: History, historyDiff: HistoryDiff) {
     return historyDiff.reduce(
@@ -201,9 +181,6 @@ class DeviceStore {
 
   /**
    * Generates date/time string in desired format.
-   * @readonly
-   * @private
-   * @type {string}
    */
   private get timestamp(): string {
     return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");

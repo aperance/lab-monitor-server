@@ -15,9 +15,6 @@ const { user, password } = getPsToolsConfig();
 /**
  * Utilizes PSTools (as child process) to run the provided command on the
  * target device. Errors are caught and included in response to client.
- *
- * @param {PsToolsRequest} request
- * @param {(PsToolsResponse) => void} sendResponse
  */
 const psToolsHandler = (
   request: PsToolsRequest,

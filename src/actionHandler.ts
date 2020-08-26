@@ -23,10 +23,6 @@ const actionLookup = getActionConfig();
 
 /**
  * Handles request from client to perform actions on devices.
- *
- * @async
- * @param {WsPayload} request Type, parameters, and targets for action.
- * @returns {Promise} Results to be sent back to client. Should not reject.
  */
 const actionHandler = async (request: {
   [key: string]: any;
@@ -45,9 +41,6 @@ const actionHandler = async (request: {
 
 /**
  * Ensure parameter names exactly match thoes listed in config file.
- *
- * @param {WsPayload} request
- * @returns {ActionRequest}
  * @throws {Error} on mismatch
  */
 const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
@@ -66,9 +59,6 @@ const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
 
 /**
  * Sends specified action request to all target devices.
- *
- * @param {ActionRequest} actionRequest
- * @returns {Promise<ActionResult[]>} Array of results for each request.
  */
 const sendRequests = (
   actionRequest: ActionRequest

@@ -58,5 +58,36 @@
     // "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
+  "typedocOptions": {
+    "exclude": ["**/*.test.ts", "**/*.test.js"],
+    "mode": "modules",
+    "out": "docs",
+    "theme": "./node_modules/typedoc-neo-theme/bin/default",
+    "plugins": ["typedoc-neo-theme"],
+    "hideGenerator": "true",
+    "outline": [
+      {
+        "Core": {
+          "engine": "_engine_",
+          "watcher": "_watcher_",
+          "deviceStore": "_deviceStore_",
+          "websocket": "_websocket_",
+        },
+        "Handlers": {
+          "psToolsHandler": "_psToolsHandler_",
+          "actionHandler": "_actionHandler_"
+        },
+        "Proxys": {
+          "httpProxy": "_httpProxy_",
+          "vncProxy": "_vncProxy_"
+        },
+        "Miscellaneous": {
+          "configuration": "_configuration_",
+          "logger": "_logger_",
+          "demo": "_demo_"
+        }
+      }
+    ]
+  },
   "include": ["./src/**/*"]
 }

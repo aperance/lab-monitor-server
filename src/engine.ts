@@ -27,7 +27,6 @@ const engine = {
   /**
    * For given IP addresses, kills current instance and spawns a new instance.
    * Refreshes all IP addresses in watcherList if specific list not provided.
-   * @param {string[]} [ipAddressArray]
    */
   refresh(ipAddressArray?: string[]): void {
     if (!ipAddressArray) ipAddressArray = Object.keys(this.watcherList);

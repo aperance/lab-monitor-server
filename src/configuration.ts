@@ -1,9 +1,6 @@
 import { readFileSync } from "fs";
 import Ajv from "ajv";
 
-/**
- * Configuration Types
- */
 export interface Config {
   deviceStore: unknown;
   engine: unknown;
@@ -45,6 +42,9 @@ export interface WatcherConfig {
 
 const ajv = new Ajv();
 
+/**
+ *
+ */
 const demoConfig = {
   engine: {
     addressRanges: [],
@@ -66,11 +66,17 @@ const demoConfig = {
   },
 };
 
+/**
+ *
+ */
 const config: Config =
   process.env.DEMO === "true"
     ? demoConfig
     : JSON.parse(readFileSync("./config.json", "utf8"));
 
+/**
+ *
+ */
 export const getEngineConfig = (): EngineConfig => {
   const schema = {
     type: "object",
@@ -88,6 +94,9 @@ export const getEngineConfig = (): EngineConfig => {
   return config.engine as EngineConfig;
 };
 
+/**
+ *
+ */
 export const getWatcherConfig = (): WatcherConfig => {
   const schema = {
     properties: {
@@ -105,6 +114,9 @@ export const getWatcherConfig = (): WatcherConfig => {
   return config.watcher as WatcherConfig;
 };
 
+/**
+ *
+ */
 export const getDeviceStoreConfig = (): DeviceStoreConfig => {
   const schema = {
     properties: {
@@ -124,6 +136,9 @@ export const getDeviceStoreConfig = (): DeviceStoreConfig => {
   return config.deviceStore as DeviceStoreConfig;
 };
 
+/**
+ *
+ */
 export const getActionConfig = (): ActionConfig => {
   const schema = {
     properties: {},
@@ -136,6 +151,9 @@ export const getActionConfig = (): ActionConfig => {
   return config.actions as ActionConfig;
 };
 
+/**
+ *
+ */
 export const getPsToolsConfig = (): PsToolsConfig => {
   const schema = {
     properties: {
