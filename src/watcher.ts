@@ -1,9 +1,7 @@
-/** @module Watcher */
-
-import * as got from "got";
-import { getWatcherConfig } from "./configuration";
-import deviceStore, { State, Status } from "./deviceStore";
-import { watcher as log } from "./logger";
+import got from "got";
+import { getWatcherConfig } from "./configuration.js";
+import deviceStore, { State, Status } from "./deviceStore.js";
+import { watcher as log } from "./logger.js";
 
 const { port, path, sequenceKey } = getWatcherConfig();
 
@@ -20,7 +18,7 @@ class Watcher {
     void,
     { success: boolean }
   > | null;
-  private timer: number | null;
+  private timer: NodeJS.Timeout | null;
 
   /**
    * Creates an instance of Watcher for the provided IP address.

@@ -1,4 +1,4 @@
-import deviceStore, { State, Status } from "./deviceStore";
+import deviceStore, { State, Status } from "./deviceStore.js";
 
 const deviceCount = 50;
 

@@ -1,9 +1,9 @@
-import * as ws from "ws";
-import actionHandler from "./actionHandler";
-import deviceStore from "./deviceStore";
-import engine from "./engine";
-import {websocket as log} from "./logger";
-import psToolsHandler from "./psToolsHandler";
+import ws from "ws";
+import actionHandler from "./actionHandler.js";
+import deviceStore from "./deviceStore.js";
+import engine from "./engine.js";
+import { websocket as log } from "./logger.js";
+import psToolsHandler from "./psToolsHandler.js";
 
 export const enum WsMessageTypeKeys {
   CONFIGURATION = "CONFIGURATION",
@@ -16,7 +16,7 @@ export const enum WsMessageTypeKeys {
   PSTOOLS_COMMAND = "PSTOOLS_COMMAND",
   PSTOOLS_COMMAND_RESPONSE = "PSTOOLS_COMMAND_RESPONSE",
   USER_DIALOG = "USER_DIALOG",
-  ERROR = "ERROR"
+  ERROR = "ERROR",
 }
 
 interface WsMessage {
@@ -33,7 +33,7 @@ const port =
 /**
  * Create new WebSocket server.
  */
-const server = new ws.Server({port: parseInt(port)});
+const server = new ws.Server({ port: parseInt(port) });
 console.log("WebSocket handler listening on port " + port);
 log.info("WebSocket handler listening on port " + port);
 
@@ -42,12 +42,12 @@ log.info("WebSocket handler listening on port " + port);
  * 1. Reply to client with full device records.
  * 2. Set message event listener for current socket.
  */
-server.on("connection", socket => {
+server.on("connection", (socket) => {
   log.info("WebSocket handler connected to client");
 
   sendToClient(socket, {
     type: WsMessageTypeKeys.DEVICE_DATA_ALL,
-    payload: deviceStore.getAccumulatedRecords()
+    payload: deviceStore.getAccumulatedRecords(),
   });
 
   socket.on("message", function incoming(data: ws.Data) {
@@ -67,7 +67,7 @@ const sendToClient = (socket: ws, outboundMessage: WsMessage): void => {
  * Send message to all clients connected to server.
  */
 const sendToAllClients = (outboundMessage: WsMessage): void => {
-  server.clients.forEach(client => {
+  server.clients.forEach((client) => {
     if (client.readyState === ws.OPEN) {
       client.send(JSON.stringify(outboundMessage));
     }
@@ -85,14 +85,14 @@ const inboundMessageHandler = (socket: ws, data: ws.Data) => {
       type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
       payload: {
         err: "Functionality not available in demo mode.",
-        results: null
-      }
+        results: null,
+      },
     });
     return;
   }
 
   // TODO: Type Guards
-  const {type, payload}: WsMessage = JSON.parse(data as string);
+  const { type, payload }: WsMessage = JSON.parse(data as string);
 
   log.info(type + " received");
 
@@ -107,19 +107,19 @@ const inboundMessageHandler = (socket: ws, data: ws.Data) => {
       break;
 
     case WsMessageTypeKeys.DEVICE_ACTION:
-      actionHandler(payload).then(actionResponse =>
+      actionHandler(payload).then((actionResponse) =>
         sendToClient(socket, {
           type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
-          payload: actionResponse
+          payload: actionResponse,
         })
       );
       break;
 
     case WsMessageTypeKeys.PSTOOLS_COMMAND:
-      psToolsHandler(payload, payload => {
+      psToolsHandler(payload, (payload) => {
         sendToClient(socket, {
           type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
-          payload
+          payload,
         });
       });
       break;
@@ -129,4 +129,4 @@ const inboundMessageHandler = (socket: ws, data: ws.Data) => {
   }
 };
 
-export {sendToClient, sendToAllClients};
+export { sendToClient, sendToAllClients };

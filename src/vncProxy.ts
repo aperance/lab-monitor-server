@@ -1,9 +1,7 @@
-/** @module vncProxy */
-
-import * as net from "net";
-import * as querystring from "querystring";
-import * as ws from "ws";
-import {vncProxy as log} from "./logger";
+import net from "net";
+import querystring from "querystring";
+import ws from "ws";
+import { vncProxy as log } from "./logger.js";
 
 const port =
   process.env.DEMO_ROLE === "vnc" ? process.env.PORT || "5000" : "5000";
@@ -11,7 +9,7 @@ const port =
 /**
  * Create new WebSocket server.
  */
-const server = new ws.Server({port: parseInt(port)});
+const server = new ws.Server({ port: parseInt(port) });
 console.log("VNC proxy listening on port " + port);
 log.info("VNC proxy listening on port " + port);
 
@@ -21,16 +19,16 @@ log.info("VNC proxy listening on port " + port);
  */
 server.on("connection", (socket, req) => {
   if (!req.url) return;
-  const {port, ip} = querystring.parse(req.url.replace("/?", ""));
+  const { port, ip } = querystring.parse(req.url.replace("/?", ""));
   if (typeof port !== "string" || typeof ip !== "string") return;
 
   const tcp = net.createConnection(parseInt(port, 10), ip, () => {
     log.info("VNC proxy established");
   });
 
-  socket.on("message", data => tcp.write(data as string));
-  tcp.on("data", data =>
-    socket.send(data, err => {
+  socket.on("message", (data) => tcp.write(data as string));
+  tcp.on("data", (data) =>
+    socket.send(data, (err) => {
       if (err) {
         log.error("WS send error: " + err);
         tcp.end();
@@ -53,13 +51,13 @@ server.on("connection", (socket, req) => {
     socket.close();
   });
 
-  socket.on("error", err => {
+  socket.on("error", (err) => {
     log.error("WS client error: " + err);
     tcp.end();
     socket.close();
   });
 
-  tcp.on("error", err => {
+  tcp.on("error", (err) => {
     log.error("VNC target error: " + err);
     tcp.end();
     socket.close();

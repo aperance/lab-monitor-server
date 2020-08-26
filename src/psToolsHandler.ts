@@ -1,7 +1,5 @@
-/** @module psToolsHandler */
-
 import { spawn } from "child_process";
-import { getPsToolsConfig } from "./configuration";
+import { getPsToolsConfig } from "./configuration.js";
 
 interface PsToolsRequest {
   [x: string]: string | undefined;

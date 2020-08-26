@@ -1,9 +1,7 @@
-/** @module engine */
+import { getEngineConfig } from "./configuration.js";
+import Watcher from "./watcher.js";
 
-import {getEngineConfig} from "./configuration";
-import Watcher from "./watcher";
-
-const {addressRanges} = getEngineConfig();
+const { addressRanges } = getEngineConfig();
 
 const engine = {
   watcherList: {} as {
@@ -17,7 +15,7 @@ const engine = {
   start(): void {
     // tslint:disable-next-line:no-console
     console.log("Engine Started");
-    addressRanges.forEach(({subnet, start, end}) => {
+    addressRanges.forEach(({ subnet, start, end }) => {
       for (let i = start; i <= end; i++) {
         const ipAddress = subnet.slice(0, -1) + i;
         this.watcherList[ipAddress] = new Watcher(ipAddress);
@@ -33,14 +31,14 @@ const engine = {
    */
   refresh(ipAddressArray?: string[]): void {
     if (!ipAddressArray) ipAddressArray = Object.keys(this.watcherList);
-    ipAddressArray.forEach(ipAddress => {
+    ipAddressArray.forEach((ipAddress) => {
       if (this.watcherList[ipAddress]) {
         this.watcherList[ipAddress].kill();
         this.watcherList[ipAddress] = new Watcher(ipAddress);
         this.watcherList[ipAddress].start();
       }
     });
-  }
+  },
 };
 
 export default engine;

@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import * as Ajv from "ajv";
+import Ajv from "ajv";
 
 /**
  * Configuration Types

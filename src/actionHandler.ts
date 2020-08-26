@@ -1,9 +1,7 @@
-/** @module actionHandler */
-
-import * as got from "got";
-import * as querystring from "querystring";
-import { getActionConfig } from "./configuration";
-import { actionHandler as log } from "./logger";
+import got from "got";
+import querystring from "querystring";
+import { getActionConfig } from "./configuration.js";
+import { actionHandler as log } from "./logger.js";
 
 interface ActionRequest {
   targets: string[];

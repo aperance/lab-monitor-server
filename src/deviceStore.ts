@@ -1,7 +1,5 @@
-/** @module DeviceStore */
-
-import { getDeviceStoreConfig } from "./configuration";
-import { sendToAllClients, WsMessageTypeKeys } from "./websocket";
+import { getDeviceStoreConfig } from "./configuration.js";
+import { sendToAllClients, WsMessageTypeKeys } from "./websocket.js";
 
 export const enum Status {
   Connected = "CONNECTED",

@@ -1,11 +1,11 @@
-import * as express from "express";
-import * as http from "http";
+import express from "express";
+import http from "http";
 
-import engine from "./engine";
-import { startDemo } from "./demo";
-import "./httpProxy";
-import "./vncProxy";
-import "./websocket";
+import engine from "./engine.js";
+import { startDemo } from "./demo.js";
+import "./httpProxy.js";
+import "./vncProxy.js";
+import "./websocket.js";
 
 if (process.env.DEMO === "true") startDemo();
 else {
