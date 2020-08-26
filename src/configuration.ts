@@ -1,13 +1,5 @@
-import { readFileSync } from "fs";
+import fs from "fs";
 import Ajv from "ajv";
-
-export interface Config {
-  deviceStore: unknown;
-  engine: unknown;
-  actions: unknown;
-  psTools: unknown;
-  watcher: unknown;
-}
 
 export interface DeviceStoreConfig {
   maxHistory: number;
@@ -40,135 +32,109 @@ export interface WatcherConfig {
   sequenceKey: string;
 }
 
-const ajv = new Ajv();
+const ajv = new Ajv({ useDefaults: true });
 
 /**
  *
  */
-const demoConfig = {
-  engine: {
-    addressRanges: [],
-  },
-  deviceStore: {
-    maxHistory: 10,
-    dateFormat: {},
-  },
-  watcher: {
-    port: 80,
-    path: "",
-    sequenceKey: "",
-    maxRetries: 3,
-  },
-  actions: {},
-  psTools: {
-    user: "",
-    password: "",
-  },
-};
-
-/**
- *
- */
-const config: Config =
-  process.env.DEMO === "true"
-    ? demoConfig
-    : JSON.parse(readFileSync("./config.json", "utf8"));
+const config = (() => {
+  try {
+    return JSON.parse(fs.readFileSync("./config.json", "utf8"));
+  } catch (e) {
+    return {};
+  }
+})();
 
 /**
  *
  */
 export const getEngineConfig = (): EngineConfig => {
+  const engineConfig: unknown = config.engine || {};
   const schema = {
     type: "object",
     properties: {
-      addressRanges: {
-        type: "array",
-      },
+      addressRanges: { type: "array", default: [] },
     },
     required: ["addressRanges"],
     additionalProperties: false,
   };
 
-  if (!ajv.validate(schema, config.engine)) throw Error(ajv.errorsText());
+  if (!ajv.validate(schema, engineConfig)) throw Error(ajv.errorsText());
 
-  return config.engine as EngineConfig;
+  return engineConfig as EngineConfig;
 };
 
 /**
  *
  */
 export const getWatcherConfig = (): WatcherConfig => {
+  const watcherConfig: unknown = config.watcher || {};
   const schema = {
     properties: {
-      port: { type: "number" },
-      path: { type: "string" },
-      sequenceKey: { type: "string" },
-      maxRetries: { type: "number" },
+      port: { type: "number", default: 80 },
+      path: { type: "string", default: "" },
+      sequenceKey: { type: "string", default: "" },
+      maxRetries: { type: "number", default: 3 },
     },
     required: ["port", "path", "sequenceKey", "maxRetries"],
     additionalProperties: false,
   };
 
-  if (!ajv.validate(schema, config.watcher)) throw Error(ajv.errorsText());
+  if (!ajv.validate(schema, watcherConfig)) throw Error(ajv.errorsText());
 
-  return config.watcher as WatcherConfig;
+  return watcherConfig as WatcherConfig;
 };
 
 /**
  *
  */
 export const getDeviceStoreConfig = (): DeviceStoreConfig => {
+  const deviceStoreConfig: unknown = config.deviceStore || {};
   const schema = {
     properties: {
-      maxHistory: {
-        type: "number",
-      },
-      dateFormat: {
-        type: "object",
-      },
+      maxHistory: { type: "number", default: 10 },
+      dateFormat: { type: "object", default: {} },
     },
     required: ["maxHistory", "dateFormat"],
     additionalProperties: false,
   };
 
-  if (!ajv.validate(schema, config.deviceStore)) throw Error(ajv.errorsText());
+  if (!ajv.validate(schema, deviceStoreConfig)) throw Error(ajv.errorsText());
 
-  return config.deviceStore as DeviceStoreConfig;
+  return deviceStoreConfig as DeviceStoreConfig;
 };
 
 /**
  *
  */
 export const getActionConfig = (): ActionConfig => {
+  const actionConfig: unknown = config.actions || {};
   const schema = {
     properties: {},
     required: [],
     additionalProperties: true,
   };
 
-  if (!ajv.validate(schema, config.actions)) throw Error(ajv.errorsText());
+  if (!ajv.validate(schema, actionConfig)) throw Error(ajv.errorsText());
 
-  return config.actions as ActionConfig;
+  return actionConfig as ActionConfig;
 };
 
 /**
  *
  */
 export const getPsToolsConfig = (): PsToolsConfig => {
+  const psToolsConfig = config.psTools || {};
   const schema = {
     properties: {
-      user: {
-        type: "string",
-      },
-      password: {
-        type: "string",
-      },
+      user: { type: "string", default: "" },
+      password: { type: "string", default: "" },
     },
     required: ["user", "password"],
     additionalProperties: false,
   };
 
-  if (!ajv.validate(schema, config.psTools)) throw Error(ajv.errorsText());
+  if (!ajv.validate(schema, psToolsConfig)) throw Error(ajv.errorsText());
 
-  return config.psTools as PsToolsConfig;
+  return psToolsConfig as PsToolsConfig;
 };
