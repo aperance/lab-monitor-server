@@ -37,8 +37,6 @@ interface AccumulatedRecords {
   };
 }
 
-const { maxHistory, dateFormat } = config;
-
 /**
  * The deviceStore class stores Map of information collectedfrom the polling
  * of devices. Each record in the Map contains a state object and a history
@@ -173,7 +171,7 @@ class DeviceStore {
         if (!history[key]) history[key] = [];
         // Push new record to top of array
         history[key] = [newRecord, ...history[key]];
-        while (history[key].length > maxHistory) history[key].pop();
+        while (history[key].length > config.maxHistory) history[key].pop();
         return history;
       },
       { ...prevHistory }
@@ -184,7 +182,9 @@ class DeviceStore {
    * Generates date/time string in desired format.
    */
   private get timestamp(): string {
-    return new Date().toLocaleString("en-US", dateFormat).replace(/,/g, "");
+    return new Date()
+      .toLocaleString("en-US", config.dateFormat)
+      .replace(/,/g, "");
   }
 }
 
