@@ -1,3 +1,4 @@
+import Ajv from "ajv";
 import ws from "ws";
 import actionHandler from "./actionHandler.js";
 import deviceStore from "./deviceStore.js";
@@ -19,11 +20,23 @@ export const enum WsMessageTypeKeys {
   ERROR = "ERROR",
 }
 
-interface WsMessage {
+interface OutboundMessage {
   type: WsMessageTypeKeys;
   payload: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
+  };
+}
+
+interface InboundMessage {
+  type: WsMessageTypeKeys;
+  payload: {
+    targets?: string[];
+    target?: string;
+    mode?: string;
+    argument?: string;
+    type?: string;
+    parameters?: { [key: string]: string };
   };
 }
 
@@ -34,6 +47,7 @@ const port =
  * Create new WebSocket server.
  */
 const server = new ws.Server({ port: parseInt(port) });
+
 console.log("WebSocket handler listening on port " + port);
 log.info("WebSocket handler listening on port " + port);
 
@@ -51,49 +65,60 @@ server.on("connection", (socket) => {
   });
 
   socket.on("message", function incoming(data: ws.Data) {
-    inboundMessageHandler(socket, data);
+    if (process.env.DEMO === "true") {
+      /** Immediate response to client when in demo mode */
+      sendToClient(socket, {
+        type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
+        payload: {
+          err: "Functionality not available in demo mode.",
+          results: null,
+        },
+      });
+    } else {
+      const message = validateInboundMessage(data);
+      if (message) inboundMessageRouter(socket, message);
+    }
   });
 });
 
 /**
- * Send message to client on the specifed socket.
+ * Parses incoming message and validates proper structure.
  */
-const sendToClient = (socket: ws, outboundMessage: WsMessage): void => {
-  log.info(outboundMessage.type + " sent to client");
-  socket.send(JSON.stringify(outboundMessage));
-};
+function validateInboundMessage(data: ws.Data): InboundMessage | undefined {
+  const ajv = new Ajv();
+  const schema = {
+    type: "object",
+    properties: {
+      type: { type: "string" },
+      payload: {
+        type: "object",
+        properties: {
+          targets: { type: "array" },
+          target: { type: "string" },
+          mode: { type: "string" },
+          argument: { type: "string" },
+          type: { type: "string" },
+          parameters: { type: "object" },
+        },
+        additionalProperties: false,
+        required: [],
+      },
+    },
+    additionalProperties: false,
+    required: ["type", "payload"],
+  };
 
-/**
- * Send message to all clients connected to server.
- */
-const sendToAllClients = (outboundMessage: WsMessage): void => {
-  server.clients.forEach((client) => {
-    if (client.readyState === ws.OPEN) {
-      client.send(JSON.stringify(outboundMessage));
-    }
-  });
-};
+  const message: unknown = JSON.parse(data as string);
+
+  if (ajv.validate(schema, message)) return message as InboundMessage;
+  else log.error(ajv.errorsText());
+}
 
 /**
  * Routes incoming ws messages to intended handlers.
  * Data returned from some handlers are sent back to client.
  */
-const inboundMessageHandler = (socket: ws, data: ws.Data) => {
-  /** Immediate response to client when in demo mode */
-  if (process.env.DEMO === "true") {
-    sendToClient(socket, {
-      type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
-      payload: {
-        err: "Functionality not available in demo mode.",
-        results: null,
-      },
-    });
-    return;
-  }
-
-  // TODO: Type Guards
-  const { type, payload }: WsMessage = JSON.parse(data as string);
-
+function inboundMessageRouter(socket: ws, { type, payload }: InboundMessage) {
   log.info(type + " received");
 
   switch (type) {
@@ -116,10 +141,10 @@ const inboundMessageHandler = (socket: ws, data: ws.Data) => {
       break;
 
     case WsMessageTypeKeys.PSTOOLS_COMMAND:
-      psToolsHandler(payload, (payload) => {
+      psToolsHandler(payload, (result) => {
         sendToClient(socket, {
           type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
-          payload,
+          payload: result,
         });
       });
       break;
@@ -127,6 +152,25 @@ const inboundMessageHandler = (socket: ws, data: ws.Data) => {
     default:
       break;
   }
-};
+}
 
-export { sendToClient, sendToAllClients };
+/**
+ * Send message to individual client on the provided socket.
+ */
+function sendToClient(socket: ws, outboundMessage: OutboundMessage): void {
+  log.info(outboundMessage.type + " sent to client");
+  socket.send(JSON.stringify(outboundMessage));
+}
+
+/**
+ * Send message to all clients connected to server.
+ */
+function sendToAllClients(outboundMessage: OutboundMessage): void {
+  server.clients.forEach((client) => {
+    if (client.readyState === ws.OPEN) {
+      client.send(JSON.stringify(outboundMessage));
+    }
+  });
+}
+
+export { sendToAllClients };

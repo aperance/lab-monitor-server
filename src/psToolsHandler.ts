@@ -2,7 +2,9 @@ import { spawn } from "child_process";
 import { psTools as config } from "./configuration.js";
 
 interface PsToolsRequest {
-  [x: string]: string | undefined;
+  target?: string;
+  mode?: string;
+  argument?: string;
 }
 
 interface PsToolsResponse {
@@ -14,10 +16,10 @@ interface PsToolsResponse {
  * Utilizes PSTools (as child process) to run the provided command on the
  * target device. Errors are caught and included in response to client.
  */
-const psToolsHandler = (
+function psToolsHandler(
   request: PsToolsRequest,
   sendResponse: (payload: PsToolsResponse) => void
-): void => {
+): void {
   try {
     const { target, mode, argument } = request;
     const { user, password } = config;
@@ -62,6 +64,6 @@ const psToolsHandler = (
       result: "Error running PsTools command. See console for details.",
     });
   }
-};
+}
 
 export default psToolsHandler;

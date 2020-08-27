@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import got from "got";
 import querystring from "querystring";
 import { actions } from "./configuration.js";
@@ -6,7 +7,7 @@ import { actionHandler as log } from "./logger.js";
 interface ActionRequest {
   targets: string[];
   type: string;
-  parameters?: { [key: string]: any };
+  parameters?: { [key: string]: string };
 }
 
 interface ActionResult {
