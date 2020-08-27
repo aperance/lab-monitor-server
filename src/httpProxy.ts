@@ -6,14 +6,10 @@ import { httpProxy as log } from "./logger.js";
 const addressMap: Map<string, string> = new Map();
 const proxyServer = httpProxy.createProxyServer({});
 
-proxyServer.on("proxyRes", (proxyRes, req, res) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-});
-
 /**
  *
  */
-const server = http.createServer((req, res) => {
+function proxyHandler(req: http.IncomingMessage, res: http.ServerResponse) {
   try {
     if (!req.connection.remoteAddress || !req.url)
       throw new Error("Unable to parse request data");
@@ -30,6 +26,7 @@ const server = http.createServer((req, res) => {
     if (!destination) throw new Error("No destination address provided");
 
     proxyServer.web(req, res, { target: `http://${destination}:8001` });
+
     log.info(`Proxying http from ${source} to ${destination}`);
   } catch (err) {
     log.error(err);
@@ -38,7 +35,12 @@ const server = http.createServer((req, res) => {
     res.write(err.message);
     res.end();
   }
+}
+
+proxyServer.on("proxyRes", (proxyRes, req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 });
 
-server.listen(9000);
+http.createServer(proxyHandler).listen(9000);
+
 log.info("HTTP Proxy listening on port 9000");
