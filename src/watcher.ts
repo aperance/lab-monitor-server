@@ -9,22 +9,15 @@ import { watcher as log } from "./logger.js";
  */
 class Watcher {
   private ipAddress: string;
-  private request: got.GotPromise<string> | null;
-  private state: Generator<
-    { status: Status; delay: number },
-    void,
-    { success: boolean }
-  > | null;
-  private timer: NodeJS.Timeout | null;
+  private request?: got.GotPromise<string>;
+  private state?: Generator<[Status, number], void, boolean>;
+  private timer?: NodeJS.Timeout;
 
   /**
    * Creates an instance of Watcher for the provided IP address.
    */
   constructor(ipAddress: string) {
     this.ipAddress = ipAddress;
-    this.request = null;
-    this.state = null;
-    this.timer = null;
   }
 
   /**
@@ -46,8 +39,8 @@ class Watcher {
   public kill(): void {
     log.warn("Killing watcher for " + this.ipAddress);
     deviceStore.set(this.ipAddress, Status.Inactive);
-    if (this.state && this.state.return) this.state.return();
-    if (this.request && this.request.cancel) this.request.cancel();
+    if (this.state?.return) this.state.return();
+    if (this.request?.cancel) this.request.cancel();
     if (this.timer) clearTimeout(this.timer);
   }
 
@@ -77,17 +70,20 @@ class Watcher {
     try {
       const response = await this.request;
       const deviceData = this.evalWrapper(response.body);
-      const { done } = this.state.next({ success: true });
-      if (done) return;
-      deviceStore.set(this.ipAddress, Status.Connected, deviceData);
-      setImmediate(this.poll.bind(this), deviceData[sequenceKey]);
+      const { done } = this.state.next(true);
+      if (!done) {
+        deviceStore.set(this.ipAddress, Status.Connected, deviceData);
+        setImmediate(this.poll.bind(this), deviceData[sequenceKey]);
+      }
     } catch (err) {
       if (err.name === "RequestError" || err.name === "EvalError") {
         log.error(`${this.ipAddress}: ${err}`);
-        const { done, value } = this.state.next({ success: false });
-        if (done || !value) return;
-        deviceStore.set(this.ipAddress, value.status);
-        this.timer = setTimeout(this.poll.bind(this), value.delay * 60000);
+        const { done, value } = this.state.next(false);
+        if (!done && value) {
+          const [status, delay] = value;
+          deviceStore.set(this.ipAddress, status);
+          this.timer = setTimeout(this.poll.bind(this), delay * 60000);
+        }
       }
       if (err.name === "CancelError")
         log.error(`${this.ipAddress}: Request Cancelled`);
@@ -114,37 +110,33 @@ class Watcher {
    * Creates a state machine to be used by the poll method. Yields new "state"
    * and "delay" values based on a provided "success" boolean.
    */
-  private *stateGenerator(): Generator<
-    { status: Status; delay: number },
-    void,
-    { success: boolean }
-  > {
+  private *stateGenerator(): Generator<[Status, number], void, boolean> {
     let status = Status.Inactive;
     let lastCommunication = 0;
     let delay = 0;
 
     while (true) {
-      const result = yield { status, delay };
+      const success = yield [status, delay];
       const previousStatus: Status = status;
 
       switch (previousStatus) {
         case Status.Connected as string:
-          if (!result.success) status = Status.Retry;
+          if (!success) status = Status.Retry;
           break;
 
         case Status.Retry as string:
-          if (result.success) status = Status.Connected;
+          if (success) status = Status.Connected;
           else status = Status.Disconnected;
           break;
 
         case Status.Disconnected as string:
-          if (result.success) status = Status.Connected;
+          if (success) status = Status.Connected;
           else if (Date.now() - lastCommunication > 10 * 60000)
             status = Status.Inactive;
           break;
 
         case Status.Inactive as string:
-          if (result.success) status = Status.Connected;
+          if (success) status = Status.Connected;
           break;
       }
 
