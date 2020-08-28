@@ -18,9 +18,11 @@ log.info("VNC proxy listening on port " + port);
  * begin passing data between the WebSocket and VNC connections.
  */
 server.on("connection", (socket, req) => {
-  if (!req.url) return;
-  const { port, ip } = querystring.parse(req.url.replace("/?", ""));
-  if (typeof port !== "string" || typeof ip !== "string") return;
+  const { port, ip } = querystring.parse(req.url?.replace(/.*\?/, "") ?? "");
+  if (typeof port !== "string" || typeof ip !== "string") {
+    log.error("nvalid query string from client: " + req.url);
+    return;
+  }
 
   const tcp = net.createConnection(parseInt(port, 10), ip, () => {
     log.info("VNC proxy established");
