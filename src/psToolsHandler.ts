@@ -1,13 +1,13 @@
 import { spawn } from "child_process";
 import { psTools as config } from "./configuration.js";
 
-interface PsToolsRequest {
+export interface PsToolsRequest {
   target?: string;
   mode?: string;
   argument?: string;
 }
 
-interface PsToolsResponse {
+export interface PsToolsResponse {
   err: Error | null;
   result: string | null;
 }

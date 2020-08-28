@@ -4,7 +4,7 @@ import querystring from "querystring";
 import { actions } from "./configuration.js";
 import { actionHandler as log } from "./logger.js";
 
-interface ActionRequest {
+export interface ActionRequest {
   targets: string[];
   type: string;
   parameters?: { [key: string]: string };
@@ -15,7 +15,7 @@ interface ActionResult {
   success: boolean;
 }
 
-interface ActionResponse {
+export interface ActionResponse {
   err: Error | null;
   results: ActionResult[] | null;
 }
@@ -26,6 +26,14 @@ interface ActionResponse {
 const actionHandler = async (request: {
   [key: string]: any;
 }): Promise<ActionResponse> => {
+  /** Immediate response to client when in demo mode */
+  if (process.env.DEMO === "true") {
+    return {
+      err: new Error("Functionality not available in demo mode."),
+      results: null,
+    };
+  }
+
   try {
     const validatedRequest: ActionRequest = validateParamaters(request);
     log.info(validatedRequest);

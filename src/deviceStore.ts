@@ -28,13 +28,19 @@ interface DeviceRecord {
   history: History;
 }
 
-interface AccumulatedRecords {
+export interface AccumulatedRecords {
   state: {
     [key: string]: State;
   };
   history: {
     [key: string]: History;
   };
+}
+
+export interface RecordUpdate {
+  id: string;
+  state: StateDiff | null;
+  history: HistoryDiff | null;
 }
 
 /**
