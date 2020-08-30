@@ -1,9 +1,13 @@
 import "./httpProxy.js";
 import "./vncProxy.js";
-import "./websocket.js";
 import { engine as config } from "./configuration.js";
 import Watcher from "./watcher.js";
 import deviceStore, { State, Status } from "./deviceStore.js";
+import http from "http";
+import url from "url";
+import { server as wss } from "./websocket.js";
+
+const server = http.createServer();
 
 /**
  * Collection of all active Watcher instances, accessable by IP address.
@@ -83,5 +87,19 @@ function startDemo() {
 
 if (process.env.DEMO === "true") startDemo();
 else start();
+
+server.on("upgrade", function upgrade(request, socket, head) {
+  const pathname = url.parse(request.url).pathname;
+
+  if (pathname === "/data") {
+    wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit("connection", ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
+
+server.listen(4000);
 
 export { refresh };

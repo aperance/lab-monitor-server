@@ -50,7 +50,7 @@ const port =
 /**
  * Create new WebSocket server.
  */
-const server = new ws.Server({ port: parseInt(port) });
+const server = new ws.Server({ noServer: true });
 
 console.log("WebSocket handler listening on port " + port);
 log.info("WebSocket handler listening on port " + port);
@@ -194,4 +194,4 @@ function isPsToolsRequest(payload: unknown): payload is PsToolsRequest {
   return false;
 }
 
-export { sendToAllClients };
+export { server, sendToAllClients };
