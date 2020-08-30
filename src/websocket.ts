@@ -19,6 +19,8 @@ import psToolsHandler, {
   PsToolsRequest,
   PsToolsResponse,
 } from "./psToolsHandler.js";
+import { IncomingMessage } from "http";
+import { Socket } from "net";
 
 export const enum WsMessageTypeKeys {
   CONFIGURATION = "CONFIGURATION",
@@ -54,19 +56,39 @@ const server = new ws.Server({ noServer: true });
  * 1. Reply to client with full device records.
  * 2. Set message event listener for current socket.
  */
-server.on("connection", (socket) => {
-  log.info("WebSocket handler connected to client");
+// server.on("connection", (socket) => {
+//   log.info("WebSocket handler connected to client");
 
-  sendToClient(socket, {
-    type: WsMessageTypeKeys.DEVICE_DATA_ALL,
-    payload: deviceStore.getAccumulatedRecords(),
-  });
+//   sendToClient(socket, {
+//     type: WsMessageTypeKeys.DEVICE_DATA_ALL,
+//     payload: deviceStore.getAccumulatedRecords(),
+//   });
 
-  socket.on("message", function incoming(data: ws.Data) {
-    const message = JSON.parse(data as string);
-    inboundMessageRouter(socket, message);
+//   socket.on("message", function incoming(data: ws.Data) {
+//     const message = JSON.parse(data as string);
+//     inboundMessageRouter(socket, message);
+//   });
+// });
+
+function connectionHandler(
+  request: IncomingMessage,
+  socket: Socket,
+  head: Buffer
+): void {
+  server.handleUpgrade(request, socket, head, function done(socket) {
+    log.info("WebSocket handler connected to client");
+
+    sendToClient(socket, {
+      type: WsMessageTypeKeys.DEVICE_DATA_ALL,
+      payload: deviceStore.getAccumulatedRecords(),
+    });
+
+    socket.on("message", function incoming(data: ws.Data) {
+      const message = JSON.parse(data as string);
+      inboundMessageRouter(socket, message);
+    });
   });
-});
+}
 
 /**
  * Send message to individual client on the provided socket.
@@ -188,4 +210,4 @@ function isPsToolsRequest(payload: unknown): payload is PsToolsRequest {
   return false;
 }
 
-export { server, sendToAllClients };
+export { connectionHandler, sendToAllClients };
