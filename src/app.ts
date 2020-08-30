@@ -3,7 +3,7 @@ import "./vncProxy.js";
 import "./websocket.js";
 import { engine as config } from "./configuration.js";
 import Watcher from "./watcher.js";
-import { startDemo } from "./demo.js";
+import deviceStore, { State, Status } from "./deviceStore.js";
 
 /**
  * Collection of all active Watcher instances, accessable by IP address.
@@ -38,6 +38,47 @@ function refresh(ipAddressArray?: string[]): void {
       watcherList[ipAddress].start();
     }
   });
+}
+
+/**
+ * Start server in demo mode. Populates device store with random data to
+ * simulate connected devices. Watcher class is not utilized.
+ * For use only with live demo at http://qa.aperance.dev.
+ */
+function startDemo() {
+  console.log(`Starting in demo mode, role: ${process.env.DEMO_ROLE}`);
+
+  const deviceCount = 50;
+  const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
+  const firmwareOptions = ["v1.0.5", "v2.0.4", "v3.0.3", "v4.0.2", "v5.0.1"];
+  const randomProperties = [...Array(26)].map(
+    (_, i) => "property" + String.fromCharCode(65 + i)
+  );
+
+  const getRandomString = () =>
+    Math.random().toString().substr(2, 10).padStart(10, "0").toUpperCase();
+
+  const pickFrom = (arr: string[]) =>
+    arr[Math.floor(Math.random() * arr.length)];
+
+  for (let i = 1; i <= deviceCount; i++) {
+    const ipAddress = "127.0.0." + i;
+    const state: State = {
+      ipAddress,
+      serial: getRandomString(),
+      hardware: pickFrom(hardwareOptions),
+      firmware: pickFrom(firmwareOptions),
+    };
+    randomProperties.forEach((prop) => (state[prop] = getRandomString()));
+    deviceStore.set(ipAddress, Status.Connected, state);
+  }
+
+  setInterval(() => {
+    const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
+    const state = { ...deviceStore.getAccumulatedRecords().state[ipAddress] };
+    randomProperties.forEach((prop) => (state[prop] = getRandomString()));
+    deviceStore.set(ipAddress, Status.Connected, state);
+  }, 200);
 }
 
 if (process.env.DEMO === "true") startDemo();
