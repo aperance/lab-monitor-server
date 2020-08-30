@@ -44,16 +44,10 @@ interface OutboundMessage {
   payload: ActionResponse | PsToolsResponse | AccumulatedRecords | RecordUpdate;
 }
 
-const port =
-  process.env.DEMO_ROLE === "primary" ? process.env.PORT || "4000" : "4000";
-
 /**
  * Create new WebSocket server.
  */
 const server = new ws.Server({ noServer: true });
-
-console.log("WebSocket handler listening on port " + port);
-log.info("WebSocket handler listening on port " + port);
 
 /**
  * On WebSocket connection event:

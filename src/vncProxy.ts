@@ -3,15 +3,10 @@ import querystring from "querystring";
 import ws from "ws";
 import { vncProxy as log } from "./logger.js";
 
-const port =
-  process.env.DEMO_ROLE === "vnc" ? process.env.PORT || "5000" : "5000";
-
 /**
  * Create new WebSocket server.
  */
-const server = new ws.Server({ port: parseInt(port) });
-console.log("VNC proxy listening on port " + port);
-log.info("VNC proxy listening on port " + port);
+const server = new ws.Server({ noServer: true });
 
 /**
  * On WebSocket connection, establish VNC (TCP) connection to target device,
@@ -20,7 +15,7 @@ log.info("VNC proxy listening on port " + port);
 server.on("connection", (socket, req) => {
   const { port, ip } = querystring.parse(req.url?.replace(/.*\?/, "") ?? "");
   if (typeof port !== "string" || typeof ip !== "string") {
-    log.error("nvalid query string from client: " + req.url);
+    log.error("invalid query string from client: " + req.url);
     return;
   }
 
@@ -65,3 +60,5 @@ server.on("connection", (socket, req) => {
     socket.close();
   });
 });
+
+export { server };
