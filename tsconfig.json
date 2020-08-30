@@ -68,7 +68,7 @@
     "outline": [
       {
         "Core": {
-          "engine": "_engine_",
+          "app": "_app_",
           "watcher": "_watcher_",
           "deviceStore": "_deviceStore_",
           "websocket": "_websocket_",

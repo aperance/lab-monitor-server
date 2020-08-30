@@ -13,7 +13,7 @@ import deviceStore, {
   AccumulatedRecords,
   RecordUpdate,
 } from "./deviceStore.js";
-import engine from "./engine.js";
+import { refresh } from "./app.js";
 import { websocket as log } from "./logger.js";
 import psToolsHandler, {
   PsToolsRequest,
@@ -103,13 +103,13 @@ function inboundMessageRouter(socket: ws, message: InboundMessage) {
 
   switch (type) {
     case WsMessageTypeKeys.REFRESH_DEVICE:
-      if (isEngineRequest(payload)) engine.refresh(payload.targets);
+      if (isEngineRequest(payload)) refresh(payload.targets);
       break;
 
     case WsMessageTypeKeys.CLEAR_DEVICE:
       if (isEngineRequest(payload)) {
         deviceStore.clear(payload.targets);
-        engine.refresh(payload.targets);
+        refresh(payload.targets);
       }
       break;
 

@@ -1,5 +1,9 @@
+import "./httpProxy.js";
+import "./vncProxy.js";
+import "./websocket.js";
 import { engine as config } from "./configuration.js";
 import Watcher from "./watcher.js";
+import { startDemo } from "./demo.js";
 
 /**
  * Collection of all active Watcher instances, accessable by IP address.
@@ -36,4 +40,7 @@ function refresh(ipAddressArray?: string[]): void {
   });
 }
 
-export default { start, refresh };
+if (process.env.DEMO === "true") startDemo();
+else start();
+
+export { refresh };
