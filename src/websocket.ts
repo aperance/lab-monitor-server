@@ -56,20 +56,6 @@ const server = new ws.Server({ noServer: true });
  * 1. Reply to client with full device records.
  * 2. Set message event listener for current socket.
  */
-// server.on("connection", (socket) => {
-//   log.info("WebSocket handler connected to client");
-
-//   sendToClient(socket, {
-//     type: WsMessageTypeKeys.DEVICE_DATA_ALL,
-//     payload: deviceStore.getAccumulatedRecords(),
-//   });
-
-//   socket.on("message", function incoming(data: ws.Data) {
-//     const message = JSON.parse(data as string);
-//     inboundMessageRouter(socket, message);
-//   });
-// });
-
 function connectionHandler(
   request: IncomingMessage,
   socket: Socket,
@@ -78,14 +64,14 @@ function connectionHandler(
   server.handleUpgrade(request, socket, head, function done(socket) {
     log.info("WebSocket handler connected to client");
 
-    sendToClient(socket, {
-      type: WsMessageTypeKeys.DEVICE_DATA_ALL,
-      payload: deviceStore.getAccumulatedRecords(),
-    });
-
     socket.on("message", function incoming(data: ws.Data) {
       const message = JSON.parse(data as string);
       inboundMessageRouter(socket, message);
+    });
+
+    sendToClient(socket, {
+      type: WsMessageTypeKeys.DEVICE_DATA_ALL,
+      payload: deviceStore.getAccumulatedRecords(),
     });
   });
 }

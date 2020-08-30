@@ -1,12 +1,11 @@
-import "./httpProxy.js";
-
-import { engine as config } from "./configuration.js";
-import Watcher from "./watcher.js";
-import deviceStore, { State, Status } from "./deviceStore.js";
 import http from "http";
 import url from "url";
 import { connectionHandler as primaryWsServer } from "./websocket.js";
-import { server as vncWsServer } from "./vncProxy.js";
+import { connectionHandler as vncWsServer } from "./vncProxy.js";
+import { engine as config } from "./configuration.js";
+import Watcher from "./watcher.js";
+import deviceStore, { State, Status } from "./deviceStore.js";
+import "./httpProxy.js";
 
 /**
  * Collection of all active Watcher instances, accessable by IP address.
@@ -87,19 +86,16 @@ function startDemo() {
 if (process.env.DEMO === "true") startDemo();
 else start();
 
+/**
+ *
+ */
 http
   .createServer()
   .on("upgrade", function upgrade(request, socket, head) {
-    const pathname = url.parse(request.url).pathname;
-
+    const { pathname } = url.parse(request.url);
     if (pathname === "/data") primaryWsServer(request, socket, head);
-    else if (pathname === "/vnc") {
-      vncWsServer.handleUpgrade(request, socket, head, function done(ws) {
-        vncWsServer.emit("connection", ws, request);
-      });
-    } else {
-      socket.destroy();
-    }
+    else if (pathname === "/vnc") vncWsServer(request, socket, head);
+    else socket.destroy();
   })
   .listen(process.env.PORT);
 

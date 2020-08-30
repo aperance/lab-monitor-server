@@ -1,3 +1,4 @@
+import { IncomingMessage } from "http";
 import net from "net";
 import querystring from "querystring";
 import ws from "ws";
@@ -12,53 +13,112 @@ const server = new ws.Server({ noServer: true });
  * On WebSocket connection, establish VNC (TCP) connection to target device,
  * begin passing data between the WebSocket and VNC connections.
  */
-server.on("connection", (socket, req) => {
-  const { port, ip } = querystring.parse(req.url?.replace(/.*\?/, "") ?? "");
-  if (typeof port !== "string" || typeof ip !== "string") {
-    log.error("invalid query string from client: " + req.url);
-    return;
-  }
+function connectionHandler(
+  request: IncomingMessage,
+  socket: net.Socket,
+  head: Buffer
+): void {
+  server.handleUpgrade(request, socket, head, function done(socket) {
+    //server.emit("connection", ws, request);
 
-  const tcp = net.createConnection(parseInt(port, 10), ip, () => {
-    log.info("VNC proxy established");
+    const { port, ip } = querystring.parse(
+      request.url?.replace(/.*\?/, "") ?? ""
+    );
+    if (typeof port !== "string" || typeof ip !== "string") {
+      log.error("invalid query string from client: " + request.url);
+      return;
+    }
+
+    const tcp = net.createConnection(parseInt(port, 10), ip, () => {
+      log.info("VNC proxy established");
+    });
+
+    socket.on("message", (data) => tcp.write(data as string));
+    tcp.on("data", (data) =>
+      socket.send(data, (err) => {
+        if (err) {
+          log.error("WS send error: " + err);
+          tcp.end();
+          socket.close();
+        }
+      })
+    );
+
+    /**
+     * Disconnection and Error Handling
+     */
+
+    socket.on("close", () => {
+      log.info("WS client disconnected");
+      tcp.end();
+    });
+
+    tcp.on("end", () => {
+      log.info("VNC target disconnected");
+      socket.close();
+    });
+
+    socket.on("error", (err) => {
+      log.error("WS client error: " + err);
+      tcp.end();
+      socket.close();
+    });
+
+    tcp.on("error", (err) => {
+      log.error("VNC target error: " + err);
+      tcp.end();
+      socket.close();
+    });
   });
+}
 
-  socket.on("message", (data) => tcp.write(data as string));
-  tcp.on("data", (data) =>
-    socket.send(data, (err) => {
-      if (err) {
-        log.error("WS send error: " + err);
-        tcp.end();
-        socket.close();
-      }
-    })
-  );
+// server.on("connection", (socket, req) => {
+//   const { port, ip } = querystring.parse(req.url?.replace(/.*\?/, "") ?? "");
+//   if (typeof port !== "string" || typeof ip !== "string") {
+//     log.error("invalid query string from client: " + req.url);
+//     return;
+//   }
 
-  /**
-   * Disconnection and Error Handling
-   */
+//   const tcp = net.createConnection(parseInt(port, 10), ip, () => {
+//     log.info("VNC proxy established");
+//   });
 
-  socket.on("close", () => {
-    log.info("WS client disconnected");
-    tcp.end();
-  });
+//   socket.on("message", (data) => tcp.write(data as string));
+//   tcp.on("data", (data) =>
+//     socket.send(data, (err) => {
+//       if (err) {
+//         log.error("WS send error: " + err);
+//         tcp.end();
+//         socket.close();
+//       }
+//     })
+//   );
 
-  tcp.on("end", () => {
-    log.info("VNC target disconnected");
-    socket.close();
-  });
+//   /**
+//    * Disconnection and Error Handling
+//    */
 
-  socket.on("error", (err) => {
-    log.error("WS client error: " + err);
-    tcp.end();
-    socket.close();
-  });
+//   socket.on("close", () => {
+//     log.info("WS client disconnected");
+//     tcp.end();
+//   });
 
-  tcp.on("error", (err) => {
-    log.error("VNC target error: " + err);
-    tcp.end();
-    socket.close();
-  });
-});
+//   tcp.on("end", () => {
+//     log.info("VNC target disconnected");
+//     socket.close();
+//   });
 
-export { server };
+//   socket.on("error", (err) => {
+//     log.error("WS client error: " + err);
+//     tcp.end();
+//     socket.close();
+//   });
+
+//   tcp.on("error", (err) => {
+//     log.error("VNC target error: " + err);
+//     tcp.end();
+//     socket.close();
+//   });
+// });
+
+export { connectionHandler };
