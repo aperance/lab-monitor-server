@@ -100,6 +100,6 @@ server.on("upgrade", function upgrade(request, socket, head) {
   }
 });
 
-server.listen(4000);
+server.listen(process.env.PORT || "4000");
 
 export { refresh };
