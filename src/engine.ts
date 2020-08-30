@@ -1,6 +1,9 @@
 import { engine as config } from "./configuration.js";
 import Watcher from "./watcher.js";
 
+/**
+ * Collection of all active Watcher instances, accessable by IP address.
+ */
 const watcherList: { [key: string]: Watcher } = {};
 
 /**

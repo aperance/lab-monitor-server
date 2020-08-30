@@ -1,3 +1,8 @@
+/**
+ * Handles sending and receiving of data to client over web socket connection.
+ * @packageDocumentation
+ */
+
 import Ajv from "ajv";
 import ws from "ws";
 import actionHandler, {
