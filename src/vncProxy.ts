@@ -20,7 +20,7 @@ function connectionHandler(
 ): void {
   server.handleUpgrade(request, socket, head, function done(socket) {
     //server.emit("connection", ws, request);
-
+    console.log("VNC CONNECTED");
     const { port, ip } = querystring.parse(
       request.url?.replace(/.*\?/, "") ?? ""
     );
