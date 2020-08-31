@@ -7,17 +7,17 @@ import Ajv from "ajv";
 import ws from "ws";
 import actionHandler, {
   ActionRequest,
-  ActionResponse,
+  ActionResponse
 } from "./actionHandler.js";
 import deviceStore, {
   AccumulatedRecords,
-  RecordUpdate,
+  RecordUpdate
 } from "./deviceStore.js";
 import { refresh } from "./app.js";
 import { websocket as log } from "./logger.js";
 import psToolsHandler, {
   PsToolsRequest,
-  PsToolsResponse,
+  PsToolsResponse
 } from "./psToolsHandler.js";
 import { IncomingMessage } from "http";
 import { Socket } from "net";
@@ -33,7 +33,7 @@ export const enum WsMessageTypeKeys {
   PSTOOLS_COMMAND = "PSTOOLS_COMMAND",
   PSTOOLS_COMMAND_RESPONSE = "PSTOOLS_COMMAND_RESPONSE",
   USER_DIALOG = "USER_DIALOG",
-  ERROR = "ERROR",
+  ERROR = "ERROR"
 }
 
 interface InboundMessage {
@@ -61,17 +61,17 @@ function connectionHandler(
   socket: Socket,
   head: Buffer
 ): void {
-  server.handleUpgrade(request, socket, head, function done(socket) {
+  server.handleUpgrade(request, socket, head, function done(ws) {
     log.info("WebSocket handler connected to client");
 
     socket.on("message", function incoming(data: ws.Data) {
       const message = JSON.parse(data as string);
-      inboundMessageRouter(socket, message);
+      inboundMessageRouter(ws, message);
     });
 
-    sendToClient(socket, {
+    sendToClient(ws, {
       type: WsMessageTypeKeys.DEVICE_DATA_ALL,
-      payload: deviceStore.getAccumulatedRecords(),
+      payload: deviceStore.getAccumulatedRecords()
     });
   });
 }
@@ -79,9 +79,9 @@ function connectionHandler(
 /**
  * Send message to individual client on the provided socket.
  */
-function sendToClient(socket: ws, outboundMessage: OutboundMessage): void {
+function sendToClient(ws: ws, outboundMessage: OutboundMessage): void {
   log.info(outboundMessage.type + " sent to client");
-  socket.send(JSON.stringify(outboundMessage));
+  ws.send(JSON.stringify(outboundMessage));
 }
 
 /**
@@ -99,7 +99,7 @@ function sendToAllClients(outboundMessage: OutboundMessage): void {
  * Routes incoming ws messages to intended handlers.
  * Data returned from some handlers are sent back to client.
  */
-function inboundMessageRouter(socket: ws, message: InboundMessage) {
+function inboundMessageRouter(ws: ws, message: InboundMessage) {
   const { type, payload } = message;
   log.info(type + " received");
 
@@ -118,9 +118,9 @@ function inboundMessageRouter(socket: ws, message: InboundMessage) {
     case WsMessageTypeKeys.DEVICE_ACTION:
       if (isActionRequest(payload))
         actionHandler(payload as ActionRequest).then((actionResponse) =>
-          sendToClient(socket, {
+          sendToClient(ws, {
             type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
-            payload: actionResponse,
+            payload: actionResponse
           })
         );
       break;
@@ -128,9 +128,9 @@ function inboundMessageRouter(socket: ws, message: InboundMessage) {
     case WsMessageTypeKeys.PSTOOLS_COMMAND:
       if (isPsToolsRequest(payload))
         psToolsHandler(payload as PsToolsRequest, (result) => {
-          sendToClient(socket, {
+          sendToClient(ws, {
             type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
-            payload: result,
+            payload: result
           });
         });
       break;
@@ -148,7 +148,7 @@ function isEngineRequest(payload: unknown): payload is { targets?: string[] } {
   const schema = {
     properties: { targets: { type: "array" } },
     additionalProperties: false,
-    required: [],
+    required: []
   };
 
   if (ajv.validate(schema, payload)) return true;
@@ -165,10 +165,10 @@ function isActionRequest(payload: unknown): payload is ActionRequest {
     properties: {
       targets: { type: "array" },
       type: { type: "string" },
-      parameters: { type: "object" },
+      parameters: { type: "object" }
     },
     additionalProperties: false,
-    required: ["targets", "type"],
+    required: ["targets", "type"]
   };
 
   if (ajv.validate(schema, payload)) return true;
@@ -185,10 +185,10 @@ function isPsToolsRequest(payload: unknown): payload is PsToolsRequest {
     properties: {
       target: { type: "string" },
       mode: { type: "string" },
-      argument: { type: "string" },
+      argument: { type: "string" }
     },
     additionalProperties: false,
-    required: [],
+    required: []
   };
 
   if (ajv.validate(schema, payload)) return true;
