@@ -5,7 +5,7 @@ import { connectionHandler as vncWsServer } from "./vncProxy.js";
 import { engine as config } from "./configuration.js";
 import Watcher from "./watcher.js";
 import deviceStore, { State, Status } from "./deviceStore.js";
-import "./httpProxy.js";
+import httpProxyHandler from "./httpProxy.js";
 
 /**
  * Collection of all active Watcher instances, accessable by IP address.
@@ -69,7 +69,7 @@ function startDemo() {
       ipAddress,
       serial: getRandomString(),
       hardware: pickFrom(hardwareOptions),
-      firmware: pickFrom(firmwareOptions),
+      firmware: pickFrom(firmwareOptions)
     };
     randomProperties.forEach((prop) => (state[prop] = getRandomString()));
     deviceStore.set(ipAddress, Status.Connected, state);
@@ -90,13 +90,13 @@ else start();
  *
  */
 http
-  .createServer()
+  .createServer(httpProxyHandler)
   .on("upgrade", function upgrade(request, socket, head) {
     const { pathname } = url.parse(request.url);
     if (pathname === "/data") primaryWsServer(request, socket, head);
     else if (pathname === "/vnc") vncWsServer(request, socket, head);
     else socket.destroy();
   })
-  .listen(process.env.PORT);
+  .listen(parseInt(process.env.PORT || "4000"));
 
 export { refresh };

@@ -1,10 +1,12 @@
 import http from "http";
 import httpProxy from "http-proxy";
-import querystring from "querystring";
+import { URL } from "url";
 import { httpProxy as log } from "./logger.js";
 
+/**
+ *
+ */
 const addressMap: Map<string, string> = new Map();
-const proxyServer = httpProxy.createProxyServer({});
 
 /**
  *
@@ -12,22 +14,24 @@ const proxyServer = httpProxy.createProxyServer({});
 function proxyHandler(req: http.IncomingMessage, res: http.ServerResponse) {
   try {
     if (!req.connection.remoteAddress || !req.url)
-      throw new Error("Unable to parse request data");
+      throw Error("Unable to parse request data");
 
-    const source = req.connection.remoteAddress.replace("::ffff:", "");
+    const src = req.connection.remoteAddress.replace("::ffff:", "");
+    let dst = new URL(req.url, `http://${src}`).searchParams.get("target");
 
-    let destination: string | string[] | undefined;
+    if (dst) addressMap.set(src, dst);
+    else dst = addressMap.get(src) || null;
 
-    destination = querystring.parse(req.url.replace(/.*\/\?/, "")).target;
+    if (dst === null) throw Error("No destination address provided");
 
-    if (typeof destination === "string") addressMap.set(source, destination);
-    else destination = addressMap.get(source);
+    httpProxy
+      .createProxyServer()
+      .on("proxyRes", (proxyRes, req, res) => {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      })
+      .web(req, res, { target: `http://${dst}:8001` });
 
-    if (!destination) throw new Error("No destination address provided");
-
-    proxyServer.web(req, res, { target: `http://${destination}:8001` });
-
-    log.info(`Proxying http from ${source} to ${destination}`);
+    log.info(`Proxying http from ${src} to ${dst}`);
   } catch (err) {
     log.error(err);
 
@@ -37,10 +41,4 @@ function proxyHandler(req: http.IncomingMessage, res: http.ServerResponse) {
   }
 }
 
-proxyServer.on("proxyRes", (proxyRes, req, res) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-});
-
-http.createServer(proxyHandler).listen(9000);
-
-log.info("HTTP Proxy listening on port 9000");
+export default proxyHandler;
