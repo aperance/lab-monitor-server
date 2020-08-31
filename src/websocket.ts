@@ -6,7 +6,7 @@
 import ws from "ws";
 import { IncomingMessage } from "http";
 import { Socket } from "net";
-import { object, string, array } from "yup";
+import yup from "yup";
 import { refresh } from "./app.js";
 import actionHandler, { ActionResponse } from "./actionHandler.js";
 import psToolsHandler, { PsToolsResponse } from "./psToolsHandler.js";
@@ -94,6 +94,8 @@ function sendToAllClients(outboundMessage: OutboundMessage): void {
  * Data returned from some handlers are sent back to client.
  */
 function inboundMessageRouter(ws: ws, message: InboundMessage) {
+  const { object, string, array } = yup;
+
   switch (message.type) {
     /** */
     case WsMessageTypeKeys.REFRESH_DEVICE: {
