@@ -3,24 +3,18 @@
  * @packageDocumentation
  */
 
-import Ajv from "ajv";
 import ws from "ws";
-import actionHandler, {
-  ActionRequest,
-  ActionResponse
-} from "./actionHandler.js";
+import { IncomingMessage } from "http";
+import { Socket } from "net";
+import { object, string, array } from "yup";
+import { refresh } from "./app.js";
+import actionHandler, { ActionResponse } from "./actionHandler.js";
+import psToolsHandler, { PsToolsResponse } from "./psToolsHandler.js";
 import deviceStore, {
   AccumulatedRecords,
   RecordUpdate
 } from "./deviceStore.js";
-import { refresh } from "./app.js";
 import { websocket as log } from "./logger.js";
-import psToolsHandler, {
-  PsToolsRequest,
-  PsToolsResponse
-} from "./psToolsHandler.js";
-import { IncomingMessage } from "http";
-import { Socket } from "net";
 
 export const enum WsMessageTypeKeys {
   CONFIGURATION = "CONFIGURATION",
@@ -100,100 +94,71 @@ function sendToAllClients(outboundMessage: OutboundMessage): void {
  * Data returned from some handlers are sent back to client.
  */
 function inboundMessageRouter(ws: ws, message: InboundMessage) {
-  const { type, payload } = message;
-  log.info(type + " received");
+  switch (message.type) {
+    /** */
+    case WsMessageTypeKeys.REFRESH_DEVICE: {
+      const schema = object({
+        targets: array().of(string().defined())
+      }).defined();
 
-  switch (type) {
-    case WsMessageTypeKeys.REFRESH_DEVICE:
-      if (isEngineRequest(payload)) refresh(payload.targets);
+      schema.validate(message.payload).then(({ targets }) => refresh(targets));
       break;
+    }
 
-    case WsMessageTypeKeys.CLEAR_DEVICE:
-      if (isEngineRequest(payload)) {
-        deviceStore.clear(payload.targets);
-        refresh(payload.targets);
-      }
+    /** */
+    case WsMessageTypeKeys.CLEAR_DEVICE: {
+      const schema = object({
+        targets: array().of(string().defined())
+      }).defined();
+
+      schema.validate(message.payload).then(({ targets }) => {
+        deviceStore.clear(targets);
+        refresh(targets);
+      });
       break;
+    }
 
-    case WsMessageTypeKeys.DEVICE_ACTION:
-      if (isActionRequest(payload))
-        actionHandler(payload as ActionRequest).then((actionResponse) =>
+    /** */
+    case WsMessageTypeKeys.DEVICE_ACTION: {
+      const schema = object({
+        target: array().of(string().defined()),
+        type: string(),
+        parameters: object()
+      }).defined();
+
+      schema.validate(message.payload).then((payload) =>
+        actionHandler(payload).then((actionResponse) =>
           sendToClient(ws, {
             type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
             payload: actionResponse
           })
-        );
+        )
+      );
       break;
+    }
 
-    case WsMessageTypeKeys.PSTOOLS_COMMAND:
-      if (isPsToolsRequest(payload))
-        psToolsHandler(payload as PsToolsRequest, (result) => {
+    /** */
+    case WsMessageTypeKeys.PSTOOLS_COMMAND: {
+      const schema = object({
+        target: string(),
+        mode: string(),
+        argument: string()
+      }).defined();
+
+      schema.validate(message.payload).then((payload) =>
+        psToolsHandler(payload, (result) => {
           sendToClient(ws, {
             type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
             payload: result
           });
-        });
+        })
+      );
       break;
+    }
 
     default:
       break;
   }
-}
-
-/**
- *
- */
-function isEngineRequest(payload: unknown): payload is { targets?: string[] } {
-  const ajv = new Ajv();
-  const schema = {
-    properties: { targets: { type: "array" } },
-    additionalProperties: false,
-    required: []
-  };
-
-  if (ajv.validate(schema, payload)) return true;
-  log.error(ajv.errorsText());
-  return false;
-}
-
-/**
- *
- */
-function isActionRequest(payload: unknown): payload is ActionRequest {
-  const ajv = new Ajv();
-  const schema = {
-    properties: {
-      targets: { type: "array" },
-      type: { type: "string" },
-      parameters: { type: "object" }
-    },
-    additionalProperties: false,
-    required: ["targets", "type"]
-  };
-
-  if (ajv.validate(schema, payload)) return true;
-  log.error(ajv.errorsText());
-  return false;
-}
-
-/**
- *
- */
-function isPsToolsRequest(payload: unknown): payload is PsToolsRequest {
-  const ajv = new Ajv();
-  const schema = {
-    properties: {
-      target: { type: "string" },
-      mode: { type: "string" },
-      argument: { type: "string" }
-    },
-    additionalProperties: false,
-    required: []
-  };
-
-  if (ajv.validate(schema, payload)) return true;
-  log.error(ajv.errorsText());
-  return false;
 }
 
 export { connectionHandler, sendToAllClients };
