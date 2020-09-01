@@ -58,7 +58,7 @@ function connectionHandler(
   server.handleUpgrade(request, socket, head, function done(ws) {
     log.info("WebSocket handler connected to client");
 
-    socket.on("message", function incoming(data: ws.Data) {
+    ws.on("message", function incoming(data: ws.Data) {
       const message = JSON.parse(data as string);
       inboundMessageRouter(ws, message);
     });
@@ -93,73 +93,79 @@ function sendToAllClients(outboundMessage: OutboundMessage): void {
  * Routes incoming ws messages to intended handlers.
  * Data returned from some handlers are sent back to client.
  */
-function inboundMessageRouter(ws: ws, message: InboundMessage) {
+async function inboundMessageRouter(ws: ws, message: InboundMessage) {
   const { object, string, array } = yup;
+  console.log(message);
 
-  switch (message.type) {
-    /** */
-    case WsMessageTypeKeys.REFRESH_DEVICE: {
-      const schema = object({
-        targets: array().of(string().defined())
-      }).defined();
+  try {
+    switch (message.type) {
+      /** */
+      case WsMessageTypeKeys.REFRESH_DEVICE: {
+        const schema = object({
+          targets: array().of(string().defined())
+        }).defined();
 
-      schema.validate(message.payload).then(({ targets }) => refresh(targets));
-      break;
-    }
+        const { targets } = await schema.validate(message.payload);
+        refresh(targets);
+        break;
+      }
 
-    /** */
-    case WsMessageTypeKeys.CLEAR_DEVICE: {
-      const schema = object({
-        targets: array().of(string().defined())
-      }).defined();
+      /** */
+      case WsMessageTypeKeys.CLEAR_DEVICE: {
+        const schema = object({
+          targets: array().of(string().defined())
+        }).defined();
 
-      schema.validate(message.payload).then(({ targets }) => {
+        const { targets } = await schema.validate(message.payload);
         deviceStore.clear(targets);
         refresh(targets);
-      });
-      break;
-    }
+        break;
+      }
 
-    /** */
-    case WsMessageTypeKeys.DEVICE_ACTION: {
-      const schema = object({
-        target: array().of(string().defined()),
-        type: string(),
-        parameters: object()
-      }).defined();
+      /** */
+      case WsMessageTypeKeys.DEVICE_ACTION: {
+        const schema = object({
+          target: array().of(string().defined()).required(),
+          type: string().required(),
+          parameters: object()
+        }).defined();
 
-      schema.validate(message.payload).then((payload) =>
-        actionHandler(payload).then((actionResponse) =>
-          sendToClient(ws, {
-            type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
-            payload: actionResponse
-          })
-        )
-      );
-      break;
-    }
+        const request = await schema.validate(message.payload);
+        const response = await actionHandler(request);
+        sendToClient(ws, {
+          type: WsMessageTypeKeys.DEVICE_ACTION_RESPONSE,
+          payload: response
+        });
+        break;
+      }
 
-    /** */
-    case WsMessageTypeKeys.PSTOOLS_COMMAND: {
-      const schema = object({
-        target: string(),
-        mode: string(),
-        argument: string()
-      }).defined();
+      /** */
+      case WsMessageTypeKeys.PSTOOLS_COMMAND: {
+        const schema = object({
+          target: string(),
+          mode: string(),
+          argument: string()
+        }).defined();
 
-      schema.validate(message.payload).then((payload) =>
-        psToolsHandler(payload, (result) => {
+        const request = await schema.validate(message.payload);
+        psToolsHandler(request, (response) => {
           sendToClient(ws, {
             type: WsMessageTypeKeys.PSTOOLS_COMMAND_RESPONSE,
-            payload: result
+            payload: response
           });
-        })
-      );
-      break;
-    }
+        });
+        break;
+      }
 
-    default:
-      break;
+      default:
+        break;
+    }
+  } catch (err) {
+    log.error(err);
+    sendToClient(ws, {
+      type: WsMessageTypeKeys.ERROR,
+      payload: err
+    });
   }
 }
 
