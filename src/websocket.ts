@@ -125,7 +125,7 @@ async function inboundMessageRouter(ws: ws, message: InboundMessage) {
       /** */
       case WsMessageTypeKeys.DEVICE_ACTION: {
         const schema = object({
-          target: array().of(string().defined()).required(),
+          targets: array().of(string().defined()).required(),
           type: string().required(),
           parameters: object()
         }).defined();
@@ -142,9 +142,9 @@ async function inboundMessageRouter(ws: ws, message: InboundMessage) {
       /** */
       case WsMessageTypeKeys.PSTOOLS_COMMAND: {
         const schema = object({
-          target: string(),
-          mode: string(),
-          argument: string()
+          target: string().required(),
+          mode: string().required(),
+          argument: string().required()
         }).defined();
 
         const request = await schema.validate(message.payload);

@@ -1,5 +1,5 @@
 import got from "got";
-import { watcher as config } from "./configuration.js";
+import config from "./configuration.js";
 import deviceStore, { State, Status } from "./deviceStore.js";
 import { watcher as log } from "./logger.js";
 
@@ -60,7 +60,7 @@ class Watcher {
   private async poll(sequence = "0"): Promise<void> {
     if (!this.state) return;
 
-    const { port, path, sequenceKey } = config;
+    const { port, path, sequenceKey } = config.watcher;
 
     /** Fetch state data from device, using url and timeout value from config */
     this.request = got(
@@ -99,7 +99,7 @@ class Watcher {
   private evalWrapper(data: string): State {
     try {
       const result: State = eval(data.replace("display(", "("));
-      if (!result[config.sequenceKey]) throw Error();
+      if (!result[config.watcher.sequenceKey]) throw Error();
       else return result;
     } catch (err) {
       throw EvalError("Unable to parse response string");

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import got from "got";
 import querystring from "querystring";
-import { actions } from "./configuration.js";
+import config from "./configuration.js";
 import { actionHandler as log } from "./logger.js";
 
 export interface ActionRequest {
@@ -23,21 +23,16 @@ export interface ActionResponse {
 /**
  * Handles request from client to perform actions on devices.
  */
-const actionHandler = async (request: {
-  [key: string]: any;
-}): Promise<ActionResponse> => {
-  /** Immediate response to client when in demo mode */
-  if (process.env.DEMO === "true") {
-    return {
-      err: new Error("Functionality not available in demo mode."),
-      results: null,
-    };
-  }
-
+const actionHandler = async (
+  request: ActionRequest
+): Promise<ActionResponse> => {
   try {
-    const validatedRequest: ActionRequest = validateParamaters(request);
-    log.info(validatedRequest);
-    const results: ActionResult[] = await sendRequests(validatedRequest);
+    /** Immediate response to client when in demo mode */
+    if (process.env.DEMO === "true")
+      throw Error("Functionality not available in demo mode.");
+    log.info(request);
+    validateParamaters(request);
+    const results: ActionResult[] = await sendRequests(request);
     log.info(results);
     return { err: null, results };
   } catch (err) {
@@ -50,18 +45,18 @@ const actionHandler = async (request: {
  * Ensure parameter names exactly match thoes listed in config file.
  * @throws {Error} on mismatch
  */
-const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
-  if (!actions[request.type])
-    throw new Error("Unknown action type specified: " + request.type);
-  const expected = actions[request.type].parameters.sort();
+const validateParamaters = (request: ActionRequest): void => {
+  if (!config.actions[request.type])
+    throw Error("Unknown action type specified: " + request.type);
+
+  const expected = config.actions[request.type].parameters.sort();
   const received = Object.keys(request.parameters || {}).sort();
   if (
     expected.length !== received.length ||
-    !expected.every((param: string, index: number) => param === received[index])
+    !expected.every((param: string, i: number) => param === received[i])
   )
-    throw new Error(`Invalid parameters for action: ${request.type}.
+    throw Error(`Invalid parameters for action: ${request.type}.
       Expected ${expected}. Recevied ${received}.`);
-  return request as ActionRequest;
 };
 
 /**
@@ -70,7 +65,7 @@ const validateParamaters = (request: { [key: string]: any }): ActionRequest => {
 const sendRequests = (
   actionRequest: ActionRequest
 ): Promise<ActionResult[]> => {
-  const { path, parameters } = actions[actionRequest.type];
+  const { path, parameters } = config.actions[actionRequest.type];
   return Promise.all(
     actionRequest.targets.map((ipAddress: string) => {
       let url = "http://" + ipAddress + path;

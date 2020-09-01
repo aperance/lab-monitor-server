@@ -1,11 +1,11 @@
-import { deviceStore as config } from "./configuration.js";
+import config from "./configuration.js";
 import { sendToAllClients, WsMessageTypeKeys } from "./websocket.js";
 
 export const enum Status {
   Connected = "CONNECTED",
   Retry = "RETRY",
   Disconnected = "DISCONNECTED",
-  Inactive = "INACTIVE",
+  Inactive = "INACTIVE"
 }
 
 export interface State {
@@ -117,7 +117,7 @@ class DeviceStore {
     // Emit modified state and modified history via callback.
     sendToAllClients({
       type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
-      payload: { id, state: stateDiff, history: historyDiff },
+      payload: { id, state: stateDiff, history: historyDiff }
     });
   }
 
@@ -132,7 +132,7 @@ class DeviceStore {
       if (result)
         sendToAllClients({
           type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
-          payload: { id, state: null, history: null },
+          payload: { id, state: null, history: null }
         });
     });
   }
@@ -177,7 +177,8 @@ class DeviceStore {
         if (!history[key]) history[key] = [];
         // Push new record to top of array
         history[key] = [newRecord, ...history[key]];
-        while (history[key].length > config.maxHistory) history[key].pop();
+        while (history[key].length > config.deviceStore.maxHistory)
+          history[key].pop();
         return history;
       },
       { ...prevHistory }
@@ -189,7 +190,7 @@ class DeviceStore {
    */
   private get timestamp(): string {
     return new Date()
-      .toLocaleString("en-US", config.dateFormat)
+      .toLocaleString("en-US", config.deviceStore.dateFormat)
       .replace(/,/g, "");
   }
 }

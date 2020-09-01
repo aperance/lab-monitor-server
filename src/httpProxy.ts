@@ -11,7 +11,10 @@ const addressMap: Map<string, string> = new Map();
 /**
  *
  */
-function proxyHandler(req: http.IncomingMessage, res: http.ServerResponse) {
+function proxyHandler(
+  req: http.IncomingMessage,
+  res: http.ServerResponse
+): void {
   try {
     if (!req.connection.remoteAddress || !req.url)
       throw Error("Unable to parse request data");

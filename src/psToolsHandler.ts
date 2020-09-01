@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
-import { psTools as config } from "./configuration.js";
+import config from "./configuration.js";
 
 export interface PsToolsRequest {
-  target?: string;
-  mode?: string;
-  argument?: string;
+  target: string;
+  mode: string;
+  argument: string;
 }
 
 export interface PsToolsResponse {
@@ -22,10 +22,7 @@ function psToolsHandler(
 ): void {
   try {
     const { target, mode, argument } = request;
-    const { user, password } = config;
-
-    if (typeof target !== "string" || typeof argument !== "string")
-      throw Error(`Missing or invalid parameters: ${JSON.stringify(request)}`);
+    const { user, password } = config.psTools;
 
     let args = `\\\\${target} -u \\${user} -p ${password} ${argument}`;
 
@@ -38,7 +35,7 @@ function psToolsHandler(
 
     sendResponse({
       err: null,
-      result: `$ C:\\PSTools\\${mode} ${args}\r\n`,
+      result: `$ C:\\PSTools\\${mode} ${args}\r\n`
     });
 
     process.on("error", (err) => {
@@ -48,20 +45,20 @@ function psToolsHandler(
     process.stdout.on("data", (data) =>
       sendResponse({
         err: null,
-        result: data.toString(),
+        result: data.toString()
       })
     );
 
     process.stderr.on("data", (data) =>
       sendResponse({
         err: null,
-        result: data.toString().replace(/\.{3}/g, "...\r\n"),
+        result: data.toString().replace(/\.{3}/g, "...\r\n")
       })
     );
   } catch (err) {
     sendResponse({
       err,
-      result: "Error running PsTools command. See console for details.",
+      result: "Error running PsTools command. See console for details."
     });
   }
 }

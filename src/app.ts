@@ -2,7 +2,7 @@ import http from "http";
 import url from "url";
 import { connectionHandler as primaryWsServer } from "./websocket.js";
 import { connectionHandler as vncWsServer } from "./vncProxy.js";
-import { engine as config } from "./configuration.js";
+import config from "./configuration.js";
 import Watcher from "./watcher.js";
 import deviceStore, { State, Status } from "./deviceStore.js";
 import httpProxyHandler from "./httpProxy.js";
