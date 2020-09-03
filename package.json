@@ -21,6 +21,7 @@
     "got": "^8.3.2",
     "http-proxy": "^1.18.1",
     "jsonschema": "^1.2.6",
+    "lodash": "^4.17.20",
     "winston": "^3.3.3",
     "ws": "^7.3.1",
     "yup": "^0.29.3"
@@ -30,6 +31,7 @@
     "@types/got": "^8.3.5",
     "@types/http-proxy": "^1.17.4",
     "@types/jest": "^25.2.3",
+    "@types/lodash": "^4.14.161",
     "@types/node": "^12.12.54",
     "@types/ws": "^7.2.6",
     "@types/yup": "^0.29.6",
