@@ -26,7 +26,7 @@ const actionHandler = async (
   try {
     /** Immediate response to client when in demo mode */
     if (process.env.DEMO === "true")
-      throw Error("Functionality not available in demo mode.");
+      return { err: "Functionality not available in demo mode.", ack: null };
 
     validateParamaters(request);
     const ack = await sendRequests(request);
