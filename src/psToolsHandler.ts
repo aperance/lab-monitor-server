@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import config from "./configuration.js";
+import { psToolsHandler as log } from "./logger.js";
 
 export interface PsToolsRequest {
   target: string;
@@ -8,8 +9,7 @@ export interface PsToolsRequest {
 }
 
 export interface PsToolsResponse {
-  err: Error | null;
-  result: string | null;
+  result: string;
 }
 
 /**
@@ -34,7 +34,6 @@ function psToolsHandler(
     const process = spawn(mode, [args], { cwd: "C:\\PSTools\\", shell: true });
 
     sendResponse({
-      err: null,
       result: `$ C:\\PSTools\\${mode} ${args}\r\n`
     });
 
@@ -44,20 +43,18 @@ function psToolsHandler(
 
     process.stdout.on("data", (data) =>
       sendResponse({
-        err: null,
         result: data.toString()
       })
     );
 
     process.stderr.on("data", (data) =>
       sendResponse({
-        err: null,
         result: data.toString().replace(/\.{3}/g, "...\r\n")
       })
     );
   } catch (err) {
+    log.error(err);
     sendResponse({
-      err,
       result: "Error running PsTools command. See console for details."
     });
   }
