@@ -10,14 +10,9 @@ export interface ActionRequest {
   parameters?: { [key: string]: string };
 }
 
-interface ActionResult {
-  err: Error | null;
-  success: boolean;
-}
-
 export interface ActionResponse {
-  err: Error | null;
-  results: ActionResult[] | null;
+  err: string | null;
+  ack: boolean | null;
 }
 
 /**
@@ -26,18 +21,19 @@ export interface ActionResponse {
 const actionHandler = async (
   request: ActionRequest
 ): Promise<ActionResponse> => {
+  log.info(request);
+
   try {
     /** Immediate response to client when in demo mode */
     if (process.env.DEMO === "true")
       throw Error("Functionality not available in demo mode.");
-    log.info(request);
+
     validateParamaters(request);
-    const results: ActionResult[] = await sendRequests(request);
-    log.info(results);
-    return { err: null, results };
+    const ack = await sendRequests(request);
+    return { err: null, ack };
   } catch (err) {
     log.error(err);
-    return { err: err.message, results: null };
+    return { err: "Error performing request. See server logs.", ack: null };
   }
 };
 
@@ -62,28 +58,21 @@ const validateParamaters = (request: ActionRequest): void => {
 /**
  * Sends specified action request to all target devices.
  */
-const sendRequests = (
-  actionRequest: ActionRequest
-): Promise<ActionResult[]> => {
-  const { path, parameters } = config.actions[actionRequest.type];
-  return Promise.all(
-    actionRequest.targets.map((ipAddress: string) => {
-      let url = "http://" + ipAddress + path;
-      if (parameters.length !== 0)
-        url += "?" + querystring.stringify(actionRequest.parameters);
-      log.info(url);
+const sendRequests = async (actionRequest: ActionRequest): Promise<boolean> => {
+  const { type, targets, parameters } = actionRequest;
+  const path = config.actions[type].path;
+  const query = parameters ? `?${querystring.stringify(parameters)}` : "";
 
-      return (
-        got(url, { retries: 0 })
-          .then(() => ({ success: true, err: null }))
-          /**
-           * Promise not rejected on errors, so that
-           * parallel requests are not interrupted.
-           */
-          .catch((err) => ({ success: false, err }))
-      );
+  const results = await Promise.allSettled(
+    targets.map(async (ipAddress) => {
+      const url = `http://${ipAddress}${path}${query}`;
+      log.info(`Requesting ${url}`);
+      const { statusCode } = await got(url, { retries: 0 });
+      return `${ipAddress} responded with ${statusCode}`;
     })
   );
+  results.forEach((result) => log.info(result));
+  return results.every(({ status }) => status === "fulfilled");
 };
 
 export default actionHandler;
