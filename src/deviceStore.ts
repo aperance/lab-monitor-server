@@ -104,6 +104,7 @@ class DeviceStore {
       historyDiff = this.mapStateDiffToHistoryDiff(stateDiff);
       nextHistory = this.mergeDiffIntoHistory(current.history, historyDiff);
     } else {
+      /** Only update status if receivedState if undefined */
       nextState = { ...current.state, status };
       stateDiff = { status };
       historyDiff = [];
@@ -163,9 +164,7 @@ class DeviceStore {
       Object.entries(stateDiff)
         // Exclude timestamp and status from being recorded in history
         .filter(([key]) => key !== "timestamp" && key !== "status")
-        .map(([key, value]): [string, [string, string | null]] => {
-          return [key, [this.timestamp, value]];
-        })
+        .map(([key, value]) => [key, [this.timestamp, value]])
     );
   }
 
@@ -178,18 +177,14 @@ class DeviceStore {
     prevHistory: History,
     historyDiff: HistoryDiff
   ): History {
-    return historyDiff.reduce(
-      (history: History, [key, newRecord]) => {
-        // If property dosent exist, add it and set to empty array
-        if (!history[key]) history[key] = [];
-        // Push new record to top of array
-        history[key] = [newRecord, ...history[key]];
-        while (history[key].length > config.deviceStore.maxHistory)
-          history[key].pop();
-        return history;
-      },
-      { ...prevHistory }
-    );
+    const newHistory = { ...prevHistory };
+    historyDiff.forEach(([key, newRecord]) => {
+      /** Push new record to top of array */
+      newHistory[key] = [newRecord, ...(newHistory[key] ?? [])];
+      while (newHistory[key].length > config.deviceStore.maxHistory)
+        newHistory[key].pop();
+    });
+    return newHistory;
   }
 
   /**
