@@ -1,3 +1,8 @@
+/**
+ * HTTP proxy
+ * @packageDocumentation
+ */
+
 import http from "http";
 import httpProxy from "http-proxy";
 import { URL } from "url";

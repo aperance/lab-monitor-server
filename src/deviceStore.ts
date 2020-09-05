@@ -1,47 +1,48 @@
 import config from "./configuration.js";
 import { sendToAllClients, WsMessageTypeKeys } from "./websocket.js";
+import { Status } from "./watcher.js";
 
-export const enum Status {
-  Connected = "CONNECTED",
-  Retry = "RETRY",
-  Disconnected = "DISCONNECTED",
-  Inactive = "INACTIVE"
-}
+/**
+ * All state properties for an individual device.
+ *
+ * Record<(property key), (property value)>
+ */
+type State = Record<string, string>;
 
-export interface State {
-  [key: string]: string;
-}
+/**
+ * All state properties modified in the latest update (null if removed).
+ *
+ * Record<(property key), (new property value)>
+ */
+type StateDiff = Record<string, string | null>;
 
-interface History {
-  [key: string]: Array<[string, string | null]>;
-}
+/**
+ * History of value changes for each state property for an individual device.
+ *
+ * Record<(property key) Array<[(timestamp), (property value)]>>
+ */
+type History = Record<string, Array<[string, string | null]>>;
 
-interface StateDiff {
-  [key: string]: string | null;
-}
+/**
+ * Array of modified state properties with timestamp (null if removed).
+ * Structured to be easily merged into History object.
+ *
+ * Array<[(property key), [(timestamp), (new property value)]]>
+ */
+type HistoryDiff = Array<[string, [string, string | null]]>;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface HistoryDiff extends Array<[string, [string, string | null]]> {}
-
-interface DeviceRecord {
-  state: State;
-  history: History;
-}
-
-export interface AccumulatedRecords {
-  state: {
-    [key: string]: State;
-  };
-  history: {
-    [key: string]: History;
-  };
-}
-
-export interface RecordUpdate {
-  id: string;
-  state: StateDiff | null;
-  history: HistoryDiff | null;
-}
+/**
+ * Collection of all data in the data store to be sent on client connection.
+ *
+ * state: Record<(device ID), (device state)>;
+ * history: Record<(device ID), (device history)>;
+ */
+type AccumulatedRecords = {
+  /** Record<(device ID), (device state)> */
+  state: Record<string, State>;
+  /** Record<(device ID), (device history)> */
+  history: Record<string, History>;
+};
 
 /**
  * The deviceStore class stores Map of information collectedfrom the polling
@@ -52,7 +53,8 @@ export interface RecordUpdate {
  * file.
  */
 class DeviceStore {
-  private deviceData: Map<string, DeviceRecord>;
+  /** Map storing all device state and state history, accessable by device ID */
+  private deviceData: Map<string, { state: State; history: History }>;
 
   /**
    * Creates an instance of DeviceStore.
@@ -66,16 +68,13 @@ class DeviceStore {
    * state and single history object, reducing work for client.
    */
   public getAccumulatedRecords(): AccumulatedRecords {
-    const recordArray: Array<[string, DeviceRecord]> = Array.from(
-      this.deviceData
-    );
-    return recordArray.reduce(
-      (accumulatedRecords: AccumulatedRecords, [id, deviceRecord]) => {
+    return Array.from(this.deviceData).reduce(
+      (accumulatedRecords, [id, deviceRecord]) => {
         accumulatedRecords.state[id] = deviceRecord.state;
         accumulatedRecords.history[id] = deviceRecord.history;
         return accumulatedRecords;
       },
-      { state: {}, history: {} }
+      { state: {}, history: {} } as AccumulatedRecords
     );
   }
 
@@ -111,10 +110,10 @@ class DeviceStore {
       nextHistory = current.history;
     }
 
-    // Save latest state and updated history objects to Map.
+    /** Save latest state and updated history objects to Map */
     this.deviceData.set(id, { state: nextState, history: nextHistory });
 
-    // Emit modified state and modified history via callback.
+    /** Emit modified state and modified history via callback */
     sendToAllClients({
       type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
       payload: { id, state: stateDiff, history: historyDiff }
@@ -123,12 +122,14 @@ class DeviceStore {
 
   /**
    * Removes record for given ID from Map. Sends null as update to trigger local clear.
-   * Clears all records in deviceData ma[] if specific list not provided.
+   * Clears all records in deviceData map[] if specific list not provided.
    */
   public clear(ids?: string[]): void {
+    /** Get all IDs in map if none specified */
     if (!ids) ids = [...this.deviceData.keys()];
     ids.forEach((id) => {
-      const result = this.deviceData.delete(id);
+      const result: boolean = this.deviceData.delete(id);
+      /** Send update if there was a record deleted for specified ID */
       if (result)
         sendToAllClients({
           type: WsMessageTypeKeys.DEVICE_DATA_UPDATE,
@@ -141,12 +142,15 @@ class DeviceStore {
    * Generate modified state object by adding latest values to modified
    * keys list.
    */
-  private reduceStateToModifiedOnly(prevState: State, newState: State) {
+  private reduceStateToModifiedOnly(
+    prevState: State,
+    newState: State
+  ): StateDiff {
     return Object.keys({ ...prevState, ...newState })
       .filter((key) => prevState[key] !== newState[key])
-      .reduce((stateAcc, propertyKey) => {
-        stateAcc[propertyKey] = newState[propertyKey] || null;
-        return stateAcc;
+      .reduce((stateDiffAcc, propertyKey) => {
+        stateDiffAcc[propertyKey] = newState[propertyKey] || null;
+        return stateDiffAcc;
       }, {} as StateDiff);
   }
 
@@ -154,7 +158,7 @@ class DeviceStore {
    * Generate modified history array by adding latest values and timestamps
    * to modified keys list.
    */
-  private mapStateDiffToHistoryDiff(stateDiff: StateDiff) {
+  private mapStateDiffToHistoryDiff(stateDiff: StateDiff): HistoryDiff {
     return (
       Object.entries(stateDiff)
         // Exclude timestamp and status from being recorded in history
@@ -170,7 +174,10 @@ class DeviceStore {
    * into previous history object, popping oldest records if max size
    * setting exceeded.
    */
-  private mergeDiffIntoHistory(prevHistory: History, historyDiff: HistoryDiff) {
+  private mergeDiffIntoHistory(
+    prevHistory: History,
+    historyDiff: HistoryDiff
+  ): History {
     return historyDiff.reduce(
       (history: History, [key, newRecord]) => {
         // If property dosent exist, add it and set to empty array

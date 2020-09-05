@@ -3,8 +3,8 @@ import url from "url";
 import { connectionHandler as primaryWsServer } from "./websocket.js";
 import { connectionHandler as vncWsServer } from "./vncProxy.js";
 import config from "./configuration.js";
-import Watcher from "./watcher.js";
-import deviceStore, { State, Status } from "./deviceStore.js";
+import Watcher, { Status } from "./watcher.js";
+import deviceStore from "./deviceStore.js";
 import httpProxyHandler from "./httpProxy.js";
 
 /**
@@ -65,7 +65,7 @@ function startDemo() {
 
   for (let i = 1; i <= deviceCount; i++) {
     const ipAddress = "127.0.0." + i;
-    const state: State = {
+    const state: Record<string, string> = {
       ipAddress,
       serial: getRandomString(),
       hardware: pickFrom(hardwareOptions),

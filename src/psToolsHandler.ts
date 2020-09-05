@@ -1,16 +1,21 @@
+/**
+ * PSTools Handler
+ * @packageDocumentation
+ */
+
 import { spawn } from "child_process";
 import config from "./configuration.js";
 import { psToolsHandler as log } from "./logger.js";
 
-export interface PsToolsRequest {
+export type PsToolsRequest = {
   target: string;
   mode: string;
   argument: string;
-}
+};
 
-export interface PsToolsResponse {
+export type PsToolsResponse = {
   result: string;
-}
+};
 
 /**
  * Utilizes PSTools (as child process) to run the provided command on the

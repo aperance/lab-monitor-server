@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Handles sending and receiving of data to client over web socket connection.
  * @packageDocumentation
@@ -8,14 +9,12 @@ import { IncomingMessage } from "http";
 import { Socket } from "net";
 import yup from "yup";
 import { refresh } from "./app.js";
-import actionHandler, { ActionResponse } from "./actionHandler.js";
-import psToolsHandler, { PsToolsResponse } from "./psToolsHandler.js";
-import deviceStore, {
-  AccumulatedRecords,
-  RecordUpdate
-} from "./deviceStore.js";
+import actionHandler from "./actionHandler.js";
+import psToolsHandler from "./psToolsHandler.js";
+import deviceStore from "./deviceStore.js";
 import { websocket as log } from "./logger.js";
 
+/** Allowed websocket message types */
 export const enum WsMessageTypeKeys {
   CONFIGURATION = "CONFIGURATION",
   DEVICE_DATA_ALL = "DEVICE_DATA_ALL",
@@ -30,15 +29,15 @@ export const enum WsMessageTypeKeys {
   ERROR = "ERROR"
 }
 
-interface InboundMessage {
-  type?: WsMessageTypeKeys;
-  payload?: unknown;
-}
-
-interface OutboundMessage {
+type InboundMessage = {
   type: WsMessageTypeKeys;
-  payload: ActionResponse | PsToolsResponse | AccumulatedRecords | RecordUpdate;
-}
+  payload: unknown;
+};
+
+type OutboundMessage = {
+  type: WsMessageTypeKeys;
+  payload: Record<string, any>;
+};
 
 /**
  * Create new WebSocket server.

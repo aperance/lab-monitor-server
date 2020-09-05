@@ -1,20 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Action Handler
+ * @packageDocumentation
+ */
+
 import got from "got";
 import _ from "lodash";
 import { stringify } from "querystring";
 import config from "./configuration.js";
 import { actionHandler as log } from "./logger.js";
 
-export interface ActionRequest {
+export type ActionRequest = {
   targets: string[];
   type: string;
   parameters?: { [key: string]: string };
-}
+};
 
-export interface ActionResponse {
+export type ActionResponse = {
   err: string | null;
   ack: boolean | null;
-}
+};
 
 /**
  * Handles request from client to perform actions on devices.

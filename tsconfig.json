@@ -32,10 +32,10 @@
     "alwaysStrict": true /* Parse in strict mode and emit "use strict" for each source file. */,
 
     /* Additional Checks */
-    // "noUnusedLocals": true,                /* Report errors on unused locals. */
+    "noUnusedLocals": true,                /* Report errors on unused locals. */
     // "noUnusedParameters": true,            /* Report errors on unused parameters. */
-    // "noImplicitReturns": true,             /* Report error when not all code paths in function return a value. */
-    // "noFallthroughCasesInSwitch": true,    /* Report errors for fallthrough cases in switch statement. */
+    "noImplicitReturns": true,             /* Report error when not all code paths in function return a value. */
+    "noFallthroughCasesInSwitch": true,    /* Report errors for fallthrough cases in switch statement. */
 
     /* Module Resolution Options */
     "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
@@ -62,8 +62,8 @@
     "exclude": ["**/*.test.ts", "**/*.test.js"],
     "mode": "modules",
     "out": "docs",
-    "theme": "./node_modules/typedoc-neo-theme/bin/default",
-    "plugins": ["typedoc-neo-theme"],
+    // "theme": "./node_modules/typedoc-neo-theme/bin/default",
+    // "plugins": ["typedoc-neo-theme"],
     "hideGenerator": "true",
     "outline": [
       {
@@ -84,7 +84,6 @@
         "Miscellaneous": {
           "configuration": "_configuration_",
           "logger": "_logger_",
-          "demo": "_demo_"
         }
       }
     ]

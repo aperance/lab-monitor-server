@@ -1,16 +1,30 @@
 import got from "got";
 import config from "./configuration.js";
-import deviceStore, { State, Status } from "./deviceStore.js";
+import deviceStore from "./deviceStore.js";
 import { watcher as log } from "./logger.js";
+
+/**
+ * Allowed values for device connection status.
+ */
+export const enum Status {
+  Connected = "CONNECTED",
+  Retry = "RETRY",
+  Disconnected = "DISCONNECTED",
+  Inactive = "INACTIVE"
+}
 
 /**
  * Continuously polls the device at the provided IP address. Received
  * device data and connection state are sent to the deviceStore.
  */
 class Watcher {
+  /** Device IP address */
   private ipAddress: string;
+  /** Reference to pending http request to device */
   private request?: got.GotPromise<string>;
+  /** Generator based state machine */
   private state?: Generator<[Status, number], void, boolean>;
+  /** Reference to timer used to detect connection timeout */
   private timer?: NodeJS.Timeout;
 
   /**
@@ -96,9 +110,9 @@ class Watcher {
    * for use in a controlled environment where an attack is extremely unlikely.
    * @throws {EvalError} if unable to parse string.
    */
-  private evalWrapper(data: string): State {
+  private evalWrapper(data: string): Record<string, string> {
     try {
-      const result: State = eval(data.replace("display(", "("));
+      const result = eval(data.replace("display(", "("));
       if (!result[config.watcher.sequenceKey]) throw Error();
       else return result;
     } catch (err) {
