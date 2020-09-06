@@ -1,8 +1,3 @@
-/**
- * PSTools Handler
- * @packageDocumentation
- */
-
 import { spawn } from "child_process";
 import config from "./configuration.js";
 import { psToolsHandler as log } from "./logger.js";

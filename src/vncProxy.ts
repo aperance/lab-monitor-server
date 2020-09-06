@@ -1,8 +1,3 @@
-/**
- * VNC proxy
- * @packageDocumentation
- */
-
 import { IncomingMessage } from "http";
 import net from "net";
 import url from "url";

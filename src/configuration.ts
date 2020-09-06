@@ -3,6 +3,9 @@ import yup from "yup";
 
 const { object, string, array, number } = yup;
 
+/**
+ * Schema for server configuration with default values.
+ */
 const schema = object({
   addressRanges: array()
     .of(
@@ -31,6 +34,9 @@ const schema = object({
   actions: object({})
 }).required();
 
+/**
+ * Import configuration from config.json (if exists) and validate against schema.
+ */
 const config = (() => {
   let data;
   try {

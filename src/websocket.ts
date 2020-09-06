@@ -1,9 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Handles sending and receiving of data to client over web socket connection.
- * @packageDocumentation
- */
-
 import ws from "ws";
 import { IncomingMessage } from "http";
 import { Socket } from "net";
@@ -45,6 +40,7 @@ type OutboundMessage = {
 const server = new ws.Server({ noServer: true });
 
 /**
+ * Establishes websocket connection to client.
  * On WebSocket connection event:
  * 1. Reply to client with full device records.
  * 2. Set message event listener for current socket.

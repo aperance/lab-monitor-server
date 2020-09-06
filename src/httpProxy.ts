@@ -1,20 +1,14 @@
-/**
- * HTTP proxy
- * @packageDocumentation
- */
-
 import http from "http";
 import httpProxy from "http-proxy";
 import { URL } from "url";
 import { httpProxy as log } from "./logger.js";
 
-/**
- *
- */
+/** Cache target IP addresses */
 const addressMap: Map<string, string> = new Map();
 
 /**
- *
+ * HTTP proxy to be used in situations that the client and device are on isolated networks.
+ * Requests are made to this server with IP address of target device in query string.
  */
 function proxyHandler(
   req: http.IncomingMessage,

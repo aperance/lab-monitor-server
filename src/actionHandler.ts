@@ -1,8 +1,3 @@
-/**
- * Action Handler
- * @packageDocumentation
- */
-
 import got from "got";
 import _ from "lodash";
 import { stringify } from "querystring";
@@ -21,7 +16,9 @@ export type ActionResponse = {
 };
 
 /**
- * Handles request from client to perform actions on devices.
+ * Handles request from client to perform actions on devices (i.e. reboot).
+ * Requests are validated and passed to device using its API. Errors or
+ * acknowledgements are passed back to the client.
  */
 const actionHandler = async (req: ActionRequest): Promise<ActionResponse> => {
   log.info(req);
