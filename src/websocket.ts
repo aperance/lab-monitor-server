@@ -94,7 +94,7 @@ async function inboundMessageRouter(ws: ws, message: InboundMessage) {
 
   try {
     switch (message.type) {
-      /** */
+      /** Request to refresh Watcher instance for given IP addresses. */
       case WsMessageTypeKeys.REFRESH_DEVICE: {
         const schema = object({
           targets: array().of(string().defined())
@@ -105,7 +105,7 @@ async function inboundMessageRouter(ws: ws, message: InboundMessage) {
         break;
       }
 
-      /** */
+      /** Request to clear DataStore records for specified devices. */
       case WsMessageTypeKeys.CLEAR_DEVICE: {
         const schema = object({
           targets: array().of(string().defined())
@@ -117,7 +117,7 @@ async function inboundMessageRouter(ws: ws, message: InboundMessage) {
         break;
       }
 
-      /** */
+      /** Request to perform action on device, to be fowrded by actionHandler */
       case WsMessageTypeKeys.DEVICE_ACTION: {
         const schema = object({
           targets: array().of(string().defined()).required(),
@@ -134,7 +134,7 @@ async function inboundMessageRouter(ws: ws, message: InboundMessage) {
         break;
       }
 
-      /** */
+      /** Request to psTools command on device, to be fowrded by psToolsHandler. */
       case WsMessageTypeKeys.PSTOOLS_COMMAND: {
         const schema = object({
           target: string().required(),
