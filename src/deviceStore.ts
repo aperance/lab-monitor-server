@@ -45,12 +45,11 @@ type AccumulatedRecords = {
 };
 
 /**
- * The deviceStore class stores Map of information collectedfrom the polling
- * of devices. Each record in the Map contains a state object and a history
+ * The deviceStore contains a map of all information collected from the polling
+ * of devices. Each device record in the Map contains a state object and a history
  * object. The state object is the most recent state received from the device.
  * The history object contains, for each state property, an array of the most
- * recent values with timestamp. The size of the array is set in the config
- * file.
+ * recent values with timestamp. The size of the array is set in the config file.
  */
 class DeviceStore {
   /** Map storing all device state and state history, accessable by device ID */
