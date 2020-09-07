@@ -14,6 +14,7 @@ export const enum Status {
 }
 
 /**
+ * Class to be instantiated for each device being monitored.
  * Continuously polls the device at the provided IP address. Received
  * device data and connection state are sent to the deviceStore.
  */
