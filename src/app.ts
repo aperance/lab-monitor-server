@@ -92,11 +92,14 @@ function startDemo() {
     const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
     const state = { ...deviceStore.getAccumulatedRecords().state[ipAddress] };
     randomProperties.forEach((prop) => (state[prop] = getRandomString()));
+    /** Cycle through status options */
+    if (state.status === Status.Retry)
+      deviceStore.set(ipAddress, Status.Disconnected);
     if (state.status === Status.Disconnected)
       deviceStore.set(ipAddress, Status.Inactive);
     else if (state.status === Status.Inactive || Math.random() < 0.8)
       deviceStore.set(ipAddress, Status.Connected, state);
-    else deviceStore.set(ipAddress, Status.Disconnected);
+    else deviceStore.set(ipAddress, Status.Retry);
   }, 500);
 }
 
