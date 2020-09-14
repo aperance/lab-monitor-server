@@ -95,7 +95,7 @@ function startDemo() {
     /** Cycle through status options */
     if (state.status === Status.Retry)
       deviceStore.set(ipAddress, Status.Disconnected);
-    if (state.status === Status.Disconnected)
+    else if (state.status === Status.Disconnected)
       deviceStore.set(ipAddress, Status.Inactive);
     else if (state.status === Status.Inactive || Math.random() < 0.8)
       deviceStore.set(ipAddress, Status.Connected, state);
