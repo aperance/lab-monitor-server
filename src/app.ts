@@ -50,7 +50,7 @@ function refresh(ipAddressArray?: string[]): void {
 function startDemo() {
   console.log(`Starting in demo mode, role: ${process.env.DEMO_ROLE}`);
 
-  const deviceCount = 25;
+  const deviceCount = 20;
   const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
   const firmwareOptions = ["v1.0.5", "v2.0.4", "v3.0.3", "v4.0.2", "v5.0.1"];
   const randomProperties = [...Array(26)].map(
@@ -90,7 +90,7 @@ function startDemo() {
       default:
         deviceStore.set(ipAddress, Status.Connected, state);
     }
-  }, 200);
+  }, 500);
 }
 
 if (process.env.DEMO === "true") startDemo();
