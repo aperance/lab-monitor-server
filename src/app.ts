@@ -8,6 +8,19 @@ import deviceStore from "./deviceStore.js";
 import httpProxyHandler from "./httpProxy.js";
 
 /**
+ * Create HTTP server and bind request handlers.
+ */
+http
+  .createServer(httpProxyHandler)
+  .on("upgrade", function upgrade(request, socket, head) {
+    const { pathname } = url.parse(request.url);
+    if (pathname === "/data") primaryWsServer(request, socket, head);
+    else if (pathname === "/vnc") vncWsServer(request, socket, head);
+    else socket.destroy();
+  })
+  .listen(parseInt(process.env.PORT || "4000"));
+
+/**
  * Collection of all active Watcher instances, accessable by IP address.
  */
 const watcherList: { [key: string]: Watcher } = {};
@@ -89,18 +102,5 @@ function startDemo() {
 
 if (process.env.DEMO === "true") startDemo();
 else start();
-
-/**
- *
- */
-http
-  .createServer(httpProxyHandler)
-  .on("upgrade", function upgrade(request, socket, head) {
-    const { pathname } = url.parse(request.url);
-    if (pathname === "/data") primaryWsServer(request, socket, head);
-    else if (pathname === "/vnc") vncWsServer(request, socket, head);
-    else socket.destroy();
-  })
-  .listen(parseInt(process.env.PORT || "4000"));
 
 export { refresh };
