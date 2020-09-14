@@ -79,17 +79,11 @@ function startDemo() {
     const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
     const state = { ...deviceStore.getAccumulatedRecords().state[ipAddress] };
     randomProperties.forEach((prop) => (state[prop] = getRandomString()));
-
-    switch (Math.floor(Math.random() * 10)) {
-      case 0:
-        deviceStore.set(ipAddress, Status.Disconnected);
-        break;
-      case 1:
-        deviceStore.set(ipAddress, Status.Inactive);
-        break;
-      default:
-        deviceStore.set(ipAddress, Status.Connected, state);
-    }
+    if (state.status === Status.Disconnected)
+      deviceStore.set(ipAddress, Status.Inactive);
+    else if (state.status === Status.Inactive || Math.random() < 0.8)
+      deviceStore.set(ipAddress, Status.Connected, state);
+    else deviceStore.set(ipAddress, Status.Disconnected);
   }, 500);
 }
 
