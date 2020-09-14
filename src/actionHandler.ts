@@ -23,10 +23,6 @@ export type ActionResponse = {
 const actionHandler = async (req: ActionRequest): Promise<ActionResponse> => {
   log.info(req);
 
-  /** Immediate response to client when in demo mode */
-  if (process.env.DEMO === "true")
-    return { err: "Functionality not available in demo mode.", ack: null };
-
   try {
     const { targets, type, parameters } = req;
 

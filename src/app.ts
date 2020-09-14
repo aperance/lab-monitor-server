@@ -50,7 +50,7 @@ function refresh(ipAddressArray?: string[]): void {
 function startDemo() {
   console.log(`Starting in demo mode, role: ${process.env.DEMO_ROLE}`);
 
-  const deviceCount = 50;
+  const deviceCount = 25;
   const hardwareOptions = ["Rev A", "Rev B", "Rev C", "Rev D", "Rev E"];
   const firmwareOptions = ["v1.0.5", "v2.0.4", "v3.0.3", "v4.0.2", "v5.0.1"];
   const randomProperties = [...Array(26)].map(
@@ -79,7 +79,17 @@ function startDemo() {
     const ipAddress = "127.0.0." + Math.ceil(Math.random() * deviceCount);
     const state = { ...deviceStore.getAccumulatedRecords().state[ipAddress] };
     randomProperties.forEach((prop) => (state[prop] = getRandomString()));
-    deviceStore.set(ipAddress, Status.Connected, state);
+
+    switch (Math.floor(Math.random() * 10)) {
+      case 0:
+        deviceStore.set(ipAddress, Status.Disconnected);
+        break;
+      case 1:
+        deviceStore.set(ipAddress, Status.Inactive);
+        break;
+      default:
+        deviceStore.set(ipAddress, Status.Connected, state);
+    }
   }, 200);
 }
 
