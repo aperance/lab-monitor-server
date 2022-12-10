@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "ajv": "^6.12.5",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "got": "^8.3.2",
     "http-proxy": "^1.18.1",
     "jsonschema": "^1.2.6",
